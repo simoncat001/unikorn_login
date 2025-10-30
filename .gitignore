@@ -1,0 +1,90 @@
+# ===============================
+# 🌐 Node / React 前端构建产物
+# ===============================
+node_modules/
+build/
+dist/
+coverage/
+*.log
+*.lock
+*.cache/
+.yarn/
+.pnp/
+.pnp.js
+.npm/
+.yarn-integrity
+
+# 环境配置
+.env
+.env.*
+.env.local
+.env.*.local
+
+# ===============================
+# ⚙️ Python / FastAPI 后端
+# ===============================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 包与构建
+build/
+dist/
+.eggs/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+*.spec
+
+# 虚拟环境
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# 测试与缓存
+.tox/
+.nox/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# ===============================
+# 🐳 Docker / 临时文件
+# ===============================
+*.pid
+*.seed
+*.pid.lock
+*.tar
+*.gz
+*.tmp
+*.bak
+*.swp
+*.log
+tmp/
+temp/
+.cache/
+*.sqlite3
+*.db
+
+# ===============================
+# 🧰 IDE / 系统文件
+# ===============================
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.iml
+*.sublime-workspace
+*.sublime-project
+
+# ===============================
+# 🧾 其他常见生成内容
+# ===============================
+uploads/
+media/
+logs/

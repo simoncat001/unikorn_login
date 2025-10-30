@@ -1,0 +1,403 @@
+{
+  "root": "/mnt/data/mgsdb_backend_extracted",
+  "changed_files": 0,
+  "total_files": 43,
+  "reports": [
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/.env.beta.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/.env.dev.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/.env.prod.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/config.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/main.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/api/admin.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": true,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/api/country.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": true,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/api/development_data.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": true,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/api/MGID_apply.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": true,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/api/organization.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": true,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/api/search.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": true,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/api/template.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": true,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/api/user.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": true,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/api/word.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": true,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/common/constants.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/common/db.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/common/error.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/common/object_store_service.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [
+        [
+          28,
+          "resp = requests.post(url + \"/api/writeObject\", files=files)"
+        ],
+        [
+          53,
+          "resp = requests.get("
+        ]
+      ],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/common/presign_upload_service.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": true
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/common/status.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/common/utils.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": true
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/common/__init__.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/database/admin_crud.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/database/base.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/database/country_crud.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/database/development_data_crud.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/database/MGID_crud.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/database/models.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/database/organization_crud.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/database/schemas.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": true
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/database/search_crud.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/database/serialnumber_crud.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/database/template_crud.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/database/user_crud.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/database/word_crud.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/database/__init__.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/data_parser/file_submit.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/data_parser/web_submit.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/data_parser/__init__.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/schema_parser/basic_information_schema.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/schema_parser/data_create_schema.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/schema_parser/template_create_schema.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    },
+    {
+      "path": "/mnt/data/mgsdb_backend_extracted/mgsdb_backend/schema_parser/__init__.py",
+      "changed": false,
+      "replacements": [],
+      "needs_annotated": false,
+      "async_blocking_hits": [],
+      "has_base_settings_import": false,
+      "has_pydantic_models": false
+    }
+  ]
+}

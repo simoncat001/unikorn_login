@@ -1,0 +1,32 @@
+Traceback (most recent call last):
+  File "/home/kevin/unikorn/backend/main.py", line 1, in <module>
+    from fastapi import FastAPI
+ModuleNotFoundError: No module named 'fastapi'
+Traceback (most recent call last):
+  File "/home/kevin/unikorn/backend/main.py", line 1, in <module>
+    from fastapi import FastAPI
+ModuleNotFoundError: No module named 'fastapi'
+Traceback (most recent call last):
+  File "/home/kevin/unikorn/backend/main.py", line 1, in <module>
+    from fastapi import FastAPI
+ModuleNotFoundError: No module named 'fastapi'
+Usage: uvicorn [OPTIONS] APP
+Try 'uvicorn --help' for help.
+
+Error: Got unexpected extra argument (/home/kevin/lishijun/main.log)
+Usage: uvicorn [OPTIONS] APP
+Try 'uvicorn --help' for help.
+
+Error: Got unexpected extra argument (/home/kevin/lishijun/main.log)
+Usage: uvicorn [OPTIONS] APP
+Try 'uvicorn --help' for help.
+
+Error: Got unexpected extra argument (/home/kevin/lishijun/backend.log)
+Usage: uvicorn [OPTIONS] APP
+Try 'uvicorn --help' for help.
+
+Error: Got unexpected extra argument (/home/kevin/lishijun/backend.log)
+Usage: uvicorn [OPTIONS] APP
+Try 'uvicorn --help' for help.
+
+Error: Got unexpected extra argument (/home/kevin/lishijun/backend.log)
