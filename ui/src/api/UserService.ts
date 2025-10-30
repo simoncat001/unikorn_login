@@ -61,8 +61,12 @@ const getUserList: (start: number, size: number) => Promise<UserResponse> =
   };
 
 // 登录方法
-const login: (username: string, password: string) => Promise<boolean> = async (username, password) => {
-  return AuthService.login(username, password);
+const login: (username: string, password: string) => Promise<boolean> = async (
+  username,
+  password
+) => {
+  await AuthService.login(username, password);
+  return true;
 };
 
 const navigateToLogin = () => {
