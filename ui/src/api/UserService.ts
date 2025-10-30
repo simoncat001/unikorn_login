@@ -159,7 +159,11 @@ const isLoggedIn: () => Promise<boolean> = async () => {
   if (AuthService.isLoggedIn()) {
     return true;
   }
-  
+
+  if (AuthService.wasExplicitlyLoggedOut()) {
+    return false;
+  }
+
   // 如果没有令牌，尝试调用API检查登录状态（兼容旧版行为）
   try {
     var fetchConfig: RequestInit = {};
