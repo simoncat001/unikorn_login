@@ -48,11 +48,37 @@ function applyEnvFile(relativePath) {
 function ensureLegacyOpenSSL() {
   const flag = "--openssl-legacy-provider";
   const current = process.env.NODE_OPTIONS || "";
-  if (!current.split(/\s+/).filter(Boolean).includes(flag)) {
-    process.env.NODE_OPTIONS = current
-      ? `${current} ${flag}`
-      : flag;
+  const hasFlag =
+    current
+      .split(/\s+/)
+      .filter(Boolean)
+      .includes(flag) || process.execArgv.includes(flag);
+
+  if (hasFlag || process.env.RUN_WITH_ENV_CHILD === "1") {
+    if (!hasFlag && process.env.RUN_WITH_ENV_CHILD === "1") {
+      console.warn(
+        "[run-with-env] WARN: expected openssl legacy flag to be present in child process"
+      );
+    }
+    return;
   }
+
+  const nextEnv = { ...process.env };
+  nextEnv.NODE_OPTIONS = current ? `${current} ${flag}` : flag;
+  nextEnv.RUN_WITH_ENV_CHILD = "1";
+
+  const { spawnSync } = require("child_process");
+  const result = spawnSync(
+    process.execPath,
+    [__filename, ...process.argv.slice(2)],
+    {
+      stdio: "inherit",
+      env: nextEnv,
+    }
+  );
+
+  const exitCode = result.status ?? 1;
+  process.exit(exitCode);
 }
 
 function runReactScripts(action) {
