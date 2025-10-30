@@ -459,7 +459,7 @@ const uploadFile = async (
     if (completeResult.file_url) {
       console.log('获取到最终文件URL:', completeResult.file_url);
       fileUrl = completeResult.file_url;
-      return fileUrl;
+      return fileUrl!;
     }
 
     console.error('未能获取最终文件URL', completeResult);
