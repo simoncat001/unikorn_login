@@ -18,6 +18,21 @@ let accessToken: string | null = null;
 let refreshToken: string | null = null;
 let isLoggingOut = false;
 
+const API_BASE = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
+
+function resolveApiUrl(path: string): string {
+  if (!API_BASE || /^https?:\/\//i.test(path)) {
+    return path;
+  }
+  if (API_BASE.endsWith("/api") && path.startsWith("/api/")) {
+    return `${API_BASE}${path.substring(4)}`;
+  }
+  if (path.startsWith("/")) {
+    return `${API_BASE}${path}`;
+  }
+  return `${API_BASE}/${path}`;
+}
+
 function initFromStorage() {
   try {
     const t = sessionStorage.getItem(ACCESS_TOKEN_KEY);
@@ -112,7 +127,7 @@ export async function login(username: string, password: string): Promise<LoginRe
   const body = new URLSearchParams();
   body.set("username", username);
   body.set("password", password);
-  const res = await fetch("/api/token", {
+  const res = await fetch(resolveApiUrl("/api/token"), {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
@@ -136,7 +151,7 @@ export async function refresh(): Promise<string> {
     throw new Error("LOGGED_OUT");
   }
   const payload = refreshToken ? { refresh_token: refreshToken } : {};
-  const res = await fetch("/api/token/refresh", {
+  const res = await fetch(resolveApiUrl("/api/token/refresh"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -157,10 +172,13 @@ export async function refresh(): Promise<string> {
 export async function logout(): Promise<void> {
   isLoggingOut = true;
   try {
-    await fetch("/api/logout", {
+    const response = await fetch(resolveApiUrl("/api/logout"), {
       method: "POST",
       credentials: "include",
     });
+    if (!response.ok && response.status !== 404) {
+      console.warn("Logout request did not succeed", response.status);
+    }
   } catch (error) {
     console.warn("Failed to notify backend about logout", error);
   }
