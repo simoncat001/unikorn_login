@@ -3,6 +3,9 @@ import { Container, InputAdornment } from "@material-ui/core";
 import { Button, TextField } from "@material-ui/core";
 import { createStyles, Theme, makeStyles } from "@material-ui/core/styles";
 import FormControl from "@material-ui/core/FormControl";
+import FormGroup from "@material-ui/core/FormGroup";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Checkbox from "@material-ui/core/Checkbox";
 import Common from "../../common/Common";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -69,8 +72,12 @@ const TemplateSearchBar: React.FC<SearchBarProps> = ({
 }) => {
   const classes = useStyles();
   const fontClasses = Common.fontStyles();
-
-  const { word, templete, studydata, MGID } = state;
+  const queryTypeOptions = [
+    { key: "word", label: "词汇" },
+    { key: "templete", label: "模板" },
+    { key: "studydata", label: "学习数据" },
+    { key: "MGID", label: "MGID" },
+  ] as const;
 
   return (
     <Container className={classes.container}>
@@ -103,7 +110,25 @@ const TemplateSearchBar: React.FC<SearchBarProps> = ({
             }}
           />
         </FormControl>
-        
+
+        <FormGroup row>
+          {queryTypeOptions.map(({ key, label }) => (
+            <FormControlLabel
+              key={key}
+              control={
+                <Checkbox
+                  color="primary"
+                  checked={state[key]}
+                  onChange={handleClickQueryType}
+                  name={key}
+                />
+              }
+              className={classes.formControlLabelControl}
+              label={<div className={fontClasses.unboldFont}>{label}</div>}
+            />
+          ))}
+        </FormGroup>
+
       </div>
     </Container>
   );

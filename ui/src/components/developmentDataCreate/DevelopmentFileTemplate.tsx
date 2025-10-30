@@ -11,19 +11,10 @@ import LinearProgress from "@material-ui/core/LinearProgress";
 import Tooltip from "@material-ui/core/Tooltip";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { JSONSchema7 } from "json-schema";
-import { UiSchema } from "@rjsf/core";
 import DevelopmentDataService, { deleteFile as deleteFileService } from "../../api/DevelopmentDataService";
 
 const aColor = Common.allColor;
 const commonProps = Common.commonProps;
-
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return "0 Bytes";
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-};
 
 const parseFileName = (path: string): string => {
   if (!path) return "";
@@ -264,23 +255,6 @@ const FileWidget = (props: WidgetProps) => {
     // 立即将 file 状态绑定，value 不变，用户需要手动点击“上传”
   };
 
-  function setNestedValue(obj: any, path: string | string[], value: any): any {
-    const keys = Array.isArray(path) ? path : path.split(".");
-    const newObj = { ...obj };
-    let current = newObj;
-
-    for (let i = 0; i < keys.length - 1; i++) {
-      const key = keys[i];
-      if (!current[key]) current[key] = {};
-      else current[key] = { ...current[key] };
-      current = current[key];
-    }
-
-    current[keys[keys.length - 1]] = value;
-    return newObj;
-  }
-
-  
   const handleUpload = async (index: number) => {
     const state = fileStates[index];
 
@@ -303,6 +277,7 @@ const FileWidget = (props: WidgetProps) => {
       )
     );
 
+    setUploadInProgress(true);
     try {
       // 可以根据需要添加objectPrefix，这里使用默认值
       const objectPrefix = 'development_data';
@@ -339,6 +314,8 @@ const FileWidget = (props: WidgetProps) => {
             : s
         )
       );
+    } finally {
+      setUploadInProgress(false);
     }
   };
 
@@ -470,4 +447,10 @@ const FileWidget = (props: WidgetProps) => {
     </Box>
   );
 };
-export default { FileWidget, FileWidgetObjectItem: FileWidget, FileWidgetArrayItem: FileWidget };
+const DevelopmentFileTemplate = {
+  FileWidget,
+  FileWidgetObjectItem: FileWidget,
+  FileWidgetArrayItem: FileWidget,
+};
+
+export default DevelopmentFileTemplate;

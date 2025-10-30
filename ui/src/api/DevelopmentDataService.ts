@@ -375,126 +375,95 @@ const uploadFile = async (
     
     // 上传分片
     console.log('第二步：开始上传分片，共', totalParts, '个分片');
-    const activeUploads: Promise<void>[] = [];
     const uploadQueue: number[] = Array.from({ length: totalParts }, (_, i) => i + 1);
+    const inFlight = new Set<Promise<void>>();
 
-    const processQueue = async () => {
-      while (uploadQueue.length > 0 && activeUploads.length < CONCURRENCY) {
-        const partNumber = uploadQueue.shift()!;
-        const start = (partNumber - 1) * PART_SIZE;
-        const end = Math.min(start + PART_SIZE, file.size);
-        const part = file.slice(start, end);
-        
-        console.log(`处理分片 ${partNumber}/${totalParts}，大小: ${part.size} 字节`);
+    const uploadSinglePart = async (partNumber: number) => {
+      const start = (partNumber - 1) * PART_SIZE;
+      const end = Math.min(start + PART_SIZE, file.size);
+      const part = file.slice(start, end);
 
-        try {
-          // 准备表单数据
-          const formData = new FormData();
-          formData.append('part_number', partNumber.toString());
-          formData.append('total_parts', totalParts.toString());
-          formData.append('file', part, file.name);
-          
-          // 所有分片都使用同一个会话ID
-          formData.append('upload_session', uploadSession || '');
+      console.log(`处理分片 ${partNumber}/${totalParts}，大小: ${part.size} 字节`);
 
-          // 使用后端直接上传分片接口
-          const uploadPromise = ApiProvider.apiProviderPost('/api/development_data/upload_part_direct', formData, true)
-            .then(async (response: Response) => {
-              const result = await response.json();
-              // 保存会话ID用于后续分片
-              if (result.upload_session) {
-                uploadSession = result.upload_session;
-              }
-              
-              uploadedBytes += part.size;
-              console.log(`分片 ${partNumber} 上传成功`);
-              
-              // 更新进度
-              if (onProgress) {
-                const progress = Math.round((uploadedBytes * 100) / file.size);
-                onProgress(progress);
-              }
-              
-              // 记录每个分片的上传状态，等待所有分片完成后统一请求最终URL
-              console.log(`分片 ${partNumber} 上传成功`);
-            })
-            .catch(error => {
-              // 检查是否是上传完成的信号
-              if (error && error.type === 'UPLOAD_COMPLETE') {
-                throw error; // 重新抛出以在外部捕获
-              }
-              
-              console.error(`分片 ${partNumber} 上传失败`, error);
-              uploadQueue.unshift(partNumber); // 重新添加到队列
-              throw error;
-            })
-            .finally(() => {
-              // 从活动上传列表中移除
-              const index = activeUploads.indexOf(uploadPromise);
-              if (index > -1) {
-                activeUploads.splice(index, 1);
-              }
-            });
+      const formData = new FormData();
+      formData.append('part_number', partNumber.toString());
+      formData.append('total_parts', totalParts.toString());
+      formData.append('file', part, file.name);
+      formData.append('upload_session', uploadSession || '');
 
-          activeUploads.push(uploadPromise);
-        } catch (error) {
-          console.error(`分片 ${partNumber} 处理失败:`, error);
-          throw new Error(`分片上传失败: ${error instanceof Error ? error.message : String(error)}`);
-        }
+      const response = await ApiProvider.apiProviderPost(
+        '/api/development_data/upload_part_direct',
+        formData,
+        true
+      );
+      const result = await response.json();
+      if (result.upload_session) {
+        uploadSession = result.upload_session;
       }
 
-      // 如果还有活动上传或队列不为空，继续处理
-      if (activeUploads.length > 0 || uploadQueue.length > 0) {
-        console.log(`当前活动上传: ${activeUploads.length}，队列剩余: ${uploadQueue.length}`);
-        try {
-          await Promise.race(activeUploads);
-          await processQueue();
-        } catch (error) {
-          // 检查是否是上传完成的信号
-          if (error && (error as any).type === 'UPLOAD_COMPLETE') {
-            throw error; // 重新抛出以在外部捕获
-          }
-          throw error;
-        }
+      uploadedBytes += part.size;
+      if (onProgress) {
+        const progress = Math.round((uploadedBytes * 100) / file.size);
+        onProgress(progress);
       }
     };
 
-    // 开始处理队列
-      try {
-        await processQueue();
-        // 等待所有活动上传完成
-        await Promise.all(activeUploads);
-        
-        console.log('所有分片上传完成');
-        
-        // 第三步：完成上传
-        console.log('第三步：完成上传，请求最终文件URL');
-        const completeFormData = new FormData();
-        completeFormData.append('upload_session', uploadSession || '');
-        
-        const completeResponse = await ApiProvider.apiProviderPost('/api/development_data/complete_multipart', completeFormData, true);
-        const completeResult = await completeResponse.json();
-        
-        if (completeResult.file_url) {
-          console.log('获取到最终文件URL:', completeResult.file_url);
-          fileUrl = completeResult.file_url;
-        } else {
-          console.error('未能获取最终文件URL', completeResult);
-          throw new Error('分片上传完成但未能获取文件URL');
-        }
-        if (fileUrl) {
-          console.log('上传成功，返回file_url:', fileUrl);
-          return fileUrl;
-        }
-        throw new Error('上传未完成但没有返回文件URL');
-      } catch (error) {
-        // 检查是否是上传完成的信号
-        const uploadError = error as any;
-        if (uploadError && uploadError.type === 'UPLOAD_COMPLETE') {
-          return uploadError.file_url;
-        }
-        throw error;
+    const startNextUpload = () => {
+      if (uploadQueue.length === 0) {
+        return;
       }
+      const partNumber = uploadQueue.shift()!;
+      const task = uploadSinglePart(partNumber)
+        .catch((error) => {
+          console.error(`分片 ${partNumber} 上传失败`, error);
+          uploadQueue.unshift(partNumber);
+          throw error;
+        })
+        .finally(() => {
+          inFlight.delete(task);
+        });
+      inFlight.add(task);
+    };
+
+    while (inFlight.size < CONCURRENCY && uploadQueue.length > 0) {
+      startNextUpload();
+    }
+
+    while (inFlight.size > 0) {
+      try {
+        await Promise.race(inFlight);
+      } catch (error) {
+        if (uploadQueue.length === 0) {
+          throw error;
+        }
+      }
+      while (inFlight.size < CONCURRENCY && uploadQueue.length > 0) {
+        startNextUpload();
+      }
+    }
+
+    console.log('所有分片上传完成');
+
+    // 第三步：完成上传
+    console.log('第三步：完成上传，请求最终文件URL');
+    const completeFormData = new FormData();
+    completeFormData.append('upload_session', uploadSession || '');
+
+    const completeResponse = await ApiProvider.apiProviderPost(
+      '/api/development_data/complete_multipart',
+      completeFormData,
+      true
+    );
+    const completeResult = await completeResponse.json();
+
+    if (completeResult.file_url) {
+      console.log('获取到最终文件URL:', completeResult.file_url);
+      fileUrl = completeResult.file_url;
+      return fileUrl;
+    }
+
+    console.error('未能获取最终文件URL', completeResult);
+    throw new Error('分片上传完成但未能获取文件URL');
   } catch (error) {
     console.error('文件上传失败:', error);
     

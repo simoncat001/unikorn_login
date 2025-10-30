@@ -46,19 +46,6 @@ function getNumber(content: string, unit?: string) {
   return content + unit;
 }
 
-function getExt(file_name: string) {
-  // 首先处理可能包含的file:前缀
-  let cleanName = file_name;
-  if (cleanName.startsWith("file:")) {
-    cleanName = cleanName.substring(5);
-  }
-  // 清理末尾的特殊字符
-  cleanName = cleanName.replace(/[:;]+$/, "");
-
-  const file_ext = cleanName.split(".");
-  return file_ext.length > 1 ? file_ext[file_ext.length - 1] : "";
-}
-
 const ContentTitle: React.FC<{
   title: string;
 }> = ({ title }) => {
@@ -85,8 +72,6 @@ const ContentFile: React.FC<{ file: UserFile }> = ({ file }) => {
 
   // 清理文件名中的特殊字符，确保显示正常
   displayName = displayName.replace(/[:;]+$/, "");
-
-  const file_ext = getExt(file.name);
 
   // 构建下载链接，直接使用sha256和扩展名
   const downloadUrl = `/api/download/${displayName}`;
@@ -118,9 +103,6 @@ const ContentString: React.FC<{
   const classes = useStyles();
   const fontClasses = Common.fontStyles();
 
-  // 安全地处理内容，确保是字符串
-  const safeContent = typeof content === 'string' ? content : String(content);
-  // 正常渲染逻辑
   return (
     <Box display="flex" flexGrow={1} p={2} className={classes.contentBlock}>
       <Typography
@@ -132,10 +114,10 @@ const ContentString: React.FC<{
             className={classes.link}
             href={MGID_DETAIL_PATH + "/" + content}
           >
-            {content}
+            {typeof content === "string" ? content : String(content)}
           </Link>
         ) : (
-          content
+          typeof content === "string" ? content : String(content)
         )}
       </Typography>
     </Box>
