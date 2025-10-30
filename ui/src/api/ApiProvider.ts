@@ -120,66 +120,61 @@ const apiProviderPost: (
 };
 
 const apiProviderDelete = async (
-  url: string,
-  config?: RequestInit
+    url: string,
+    config?: RequestInit
 ): Promise<Response> => {
-  try {
-    let fetchConfig: RequestInit = {};
-    if (config !== null && config !== undefined) {
-      fetchConfig = config;
-    }
-    fetchConfig.method = "DELETE";
-    fetchConfig.redirect = "manual";
-    if (!fetchConfig.credentials) {
-      fetchConfig.credentials = "include";
-    }
-    const fetchHeadersInit: HeadersInit = {};
-    fetchConfig.headers = fetchHeadersInit;
-
-    const token = getAccessToken();
-    if (token) {
-      fetchConfig.headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    let fetchResponse = await fetch(url, fetchConfig);
-    if (!fetchResponse.ok) {
-      if (fetchResponse.status === 401) {
-        try {
-          const newToken = await refresh();
-          fetchConfig.headers["Authorization"] = `Bearer ${newToken}`;
-          fetchResponse = await fetch(url, fetchConfig);
-        } catch (e) {
-          if (window.location.pathname !== LOGIN_PATH) {
-            redirectToLogin();
-          }
+    try {
+        let fetchConfig: RequestInit = {};
+        if (config !== null && config !== undefined) {
+            fetchConfig = config;
         }
-      }
-      if (!fetchResponse.ok) {
-        if (
-          fetchResponse.type === "opaqueredirect" &&
-          fetchResponse.url &&
-          window.location.pathname !== LOGIN_PATH
-        ) {
-          redirectToLogin();
+        fetchConfig.method = "DELETE";
+        fetchConfig.redirect = "manual";
+        if (!fetchConfig.credentials) {
+            fetchConfig.credentials = "include";
         }
-      }
+        const fetchHeadersInit: HeadersInit = {};
+        fetchConfig.headers = fetchHeadersInit;
+
+        const token = getAccessToken();
+        if (token) {
+            fetchConfig.headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        let fetchResponse = await fetch(url, fetchConfig);
+        if (!fetchResponse.ok) {
+            if (fetchResponse.status === 401) {
+                try {
+                    const newToken = await refresh();
+                    fetchConfig.headers["Authorization"] = `Bearer ${newToken}`;
+                    fetchResponse = await fetch(url, fetchConfig);
+                } catch (e) {
+                    if (window.location.pathname !== LOGIN_PATH) {
+                        redirectToLogin();
+                    }
+                }
+            }
+            if (!fetchResponse.ok) {
+                if (
+                    fetchResponse.type === "opaqueredirect" &&
+                    fetchResponse.url &&
+                    window.location.pathname !== LOGIN_PATH
+                ) {
+                    redirectToLogin();
+                }
+            }
+        }
+        return fetchResponse;
+    } catch (e) {
+        console.error(e);
+        throw e;
     }
-    return fetchResponse;
-  } catch (e) {
-    console.error(e);
-    throw e;
-  }
 };
 
 const exportApiProvider = {
-<<<<<<< HEAD
     apiProviderGet,
     apiProviderPost,
-=======
-  apiProviderGet,
-  apiProviderPost,
-  apiProviderDelete,
->>>>>>> 99ae25b61744809259135b8438289350e12d1377
+    apiProviderDelete,
 };
 
 export default exportApiProvider;
