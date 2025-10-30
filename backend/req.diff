@@ -1,0 +1,10 @@
+--- a/database/base.py
++++ b/database/base.py
+@@
+-from sqlalchemy import create_engine
+-from config import SQLALCHEMY_DATABASE_URL
+-engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
++from sqlalchemy import create_engine
++from config import SQLALCHEMY_DATABASE_URL
++engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
+# 其余不变

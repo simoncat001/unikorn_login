@@ -1,0 +1,583 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- Generator: Adobe Illustrator 25.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg y="0px" x="0px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" height="256" width="256" style="enable-background:new 0 0 256 256;" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" xml:space="preserve">
+    <style type="text/css">
+	.st0{display:none;}
+	.st1{display:inline;fill:none;stroke:#BCBCBC;stroke-width:2;stroke-miterlimit:10;}
+	.st2{display:inline;}
+	.st3{fill:#BCBCBC;}
+	.st4{fill:none;stroke:#CCCCCC;stroke-width:0.5;stroke-miterlimit:10;}
+	.st5{fill:none;stroke:#666666;stroke-width:0.5;}
+	.st6{fill:none;stroke:#666666;stroke-width:0.5;stroke-dasharray:2;}
+	.st7{clip-path:url(#SVGID_2_);}
+	.st8{clip-path:url(#SVGID_4_);enable-background:new    ;}
+	.st9{clip-path:url(#SVGID_6_);}
+	.st10{clip-path:url(#SVGID_8_);}
+	.st11{opacity:0.3;clip-path:url(#SVGID_10_);fill:#FF5353;}
+	.st12{clip-path:url(#SVGID_12_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st13{clip-path:url(#SVGID_14_);}
+	.st14{clip-path:url(#SVGID_16_);enable-background:new    ;}
+	.st15{clip-path:url(#SVGID_18_);}
+	.st16{clip-path:url(#SVGID_20_);}
+	.st17{opacity:0.3;clip-path:url(#SVGID_22_);fill:#FF5353;}
+	.st18{clip-path:url(#SVGID_24_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st19{clip-path:url(#SVGID_26_);}
+	.st20{clip-path:url(#SVGID_28_);enable-background:new    ;}
+	.st21{clip-path:url(#SVGID_30_);}
+	.st22{clip-path:url(#SVGID_32_);}
+	.st23{opacity:0.3;clip-path:url(#SVGID_34_);fill:#FF5353;}
+	.st24{clip-path:url(#SVGID_36_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st25{clip-path:url(#SVGID_38_);}
+	.st26{clip-path:url(#SVGID_40_);enable-background:new    ;}
+	.st27{clip-path:url(#SVGID_42_);}
+	.st28{clip-path:url(#SVGID_44_);}
+	.st29{opacity:0.3;clip-path:url(#SVGID_46_);fill:#FF5353;}
+	.st30{clip-path:url(#SVGID_48_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st31{clip-path:url(#SVGID_50_);}
+	.st32{clip-path:url(#SVGID_52_);enable-background:new    ;}
+	.st33{clip-path:url(#SVGID_54_);}
+	.st34{clip-path:url(#SVGID_56_);}
+	.st35{opacity:0.3;clip-path:url(#SVGID_58_);fill:#FF5353;}
+	.st36{clip-path:url(#SVGID_60_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st37{clip-path:url(#SVGID_62_);}
+	.st38{clip-path:url(#SVGID_64_);enable-background:new    ;}
+	.st39{clip-path:url(#SVGID_66_);}
+	.st40{clip-path:url(#SVGID_68_);}
+	.st41{opacity:0.3;clip-path:url(#SVGID_70_);fill:#FF5353;}
+	.st42{clip-path:url(#SVGID_72_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st43{clip-path:url(#SVGID_74_);}
+	.st44{clip-path:url(#SVGID_76_);enable-background:new    ;}
+	.st45{clip-path:url(#SVGID_78_);}
+	.st46{clip-path:url(#SVGID_80_);}
+	.st47{opacity:0.3;clip-path:url(#SVGID_82_);fill:#FF5353;}
+	.st48{clip-path:url(#SVGID_84_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st49{clip-path:url(#SVGID_86_);}
+	.st50{clip-path:url(#SVGID_88_);enable-background:new    ;}
+	.st51{clip-path:url(#SVGID_90_);}
+	.st52{clip-path:url(#SVGID_92_);}
+	.st53{opacity:0.3;clip-path:url(#SVGID_94_);fill:#FF5353;}
+	.st54{clip-path:url(#SVGID_96_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st55{clip-path:url(#SVGID_98_);}
+	.st56{clip-path:url(#SVGID_100_);enable-background:new    ;}
+	.st57{clip-path:url(#SVGID_102_);}
+	.st58{clip-path:url(#SVGID_104_);}
+	.st59{opacity:0.3;clip-path:url(#SVGID_106_);fill:#FF5353;}
+	.st60{clip-path:url(#SVGID_108_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st61{clip-path:url(#SVGID_110_);}
+	.st62{clip-path:url(#SVGID_112_);enable-background:new    ;}
+	.st63{clip-path:url(#SVGID_114_);}
+	.st64{clip-path:url(#SVGID_116_);}
+	.st65{opacity:0.3;clip-path:url(#SVGID_118_);fill:#FF5353;}
+	.st66{clip-path:url(#SVGID_120_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st67{clip-path:url(#SVGID_122_);}
+	.st68{clip-path:url(#SVGID_124_);enable-background:new    ;}
+	.st69{clip-path:url(#SVGID_126_);}
+	.st70{clip-path:url(#SVGID_128_);}
+	.st71{opacity:0.3;clip-path:url(#SVGID_130_);fill:#FF5353;}
+	.st72{clip-path:url(#SVGID_132_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st73{clip-path:url(#SVGID_134_);}
+	.st74{clip-path:url(#SVGID_136_);enable-background:new    ;}
+	.st75{clip-path:url(#SVGID_138_);}
+	.st76{clip-path:url(#SVGID_140_);}
+	.st77{opacity:0.3;clip-path:url(#SVGID_142_);fill:#FF5353;}
+	.st78{clip-path:url(#SVGID_144_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st79{clip-path:url(#SVGID_146_);}
+	.st80{clip-path:url(#SVGID_148_);enable-background:new    ;}
+	.st81{clip-path:url(#SVGID_150_);}
+	.st82{clip-path:url(#SVGID_152_);}
+	.st83{opacity:0.3;clip-path:url(#SVGID_154_);fill:#FF5353;}
+	.st84{clip-path:url(#SVGID_156_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st85{clip-path:url(#SVGID_158_);}
+	.st86{clip-path:url(#SVGID_160_);enable-background:new    ;}
+	.st87{clip-path:url(#SVGID_162_);}
+	.st88{clip-path:url(#SVGID_164_);}
+	.st89{opacity:0.3;clip-path:url(#SVGID_166_);fill:#FF5353;}
+	.st90{clip-path:url(#SVGID_168_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st91{clip-path:url(#SVGID_170_);}
+	.st92{clip-path:url(#SVGID_172_);enable-background:new    ;}
+	.st93{clip-path:url(#SVGID_174_);}
+	.st94{clip-path:url(#SVGID_176_);}
+	.st95{opacity:0.3;clip-path:url(#SVGID_178_);fill:#FF5353;}
+	.st96{clip-path:url(#SVGID_180_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st97{clip-path:url(#SVGID_182_);}
+	.st98{clip-path:url(#SVGID_184_);enable-background:new    ;}
+	.st99{clip-path:url(#SVGID_186_);}
+	.st100{clip-path:url(#SVGID_188_);}
+	.st101{opacity:0.3;clip-path:url(#SVGID_190_);fill:#FF5353;}
+	.st102{clip-path:url(#SVGID_192_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st103{clip-path:url(#SVGID_194_);}
+	.st104{clip-path:url(#SVGID_196_);enable-background:new    ;}
+	.st105{clip-path:url(#SVGID_198_);}
+	.st106{clip-path:url(#SVGID_200_);}
+	.st107{opacity:0.3;clip-path:url(#SVGID_202_);fill:#FF5353;}
+	.st108{clip-path:url(#SVGID_204_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st109{clip-path:url(#SVGID_206_);}
+	.st110{clip-path:url(#SVGID_208_);enable-background:new    ;}
+	.st111{clip-path:url(#SVGID_210_);}
+	.st112{clip-path:url(#SVGID_212_);}
+	.st113{opacity:0.3;clip-path:url(#SVGID_214_);fill:#FF5353;}
+	.st114{clip-path:url(#SVGID_216_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st115{clip-path:url(#SVGID_218_);}
+	.st116{clip-path:url(#SVGID_220_);enable-background:new    ;}
+	.st117{clip-path:url(#SVGID_222_);}
+	.st118{clip-path:url(#SVGID_224_);}
+	.st119{opacity:0.3;clip-path:url(#SVGID_226_);fill:#FF5353;}
+	.st120{clip-path:url(#SVGID_228_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st121{clip-path:url(#SVGID_230_);}
+	.st122{clip-path:url(#SVGID_232_);enable-background:new    ;}
+	.st123{clip-path:url(#SVGID_234_);}
+	.st124{clip-path:url(#SVGID_236_);}
+	.st125{opacity:0.3;clip-path:url(#SVGID_238_);fill:#FF5353;}
+	.st126{clip-path:url(#SVGID_240_);fill:none;stroke:#FF5353;stroke-width:2;stroke-miterlimit:10;}
+	.st127{fill:url(#SVGID_241_);}
+	.st128{fill:url(#SVGID_242_);}
+	.st129{fill:url(#SVGID_243_);}
+	.st130{fill:url(#SVGID_244_);}
+	.st131{fill:url(#SVGID_245_);}
+	.st132{fill:url(#SVGID_246_);}
+	.st133{fill:url(#SVGID_247_);}
+	.st134{fill:url(#SVGID_248_);}
+	.st135{fill:url(#SVGID_249_);}
+	.st136{fill:url(#SVGID_250_);}
+	.st137{fill:url(#SVGID_251_);}
+	.st138{fill:url(#SVGID_252_);}
+	.st139{fill:url(#SVGID_253_);}
+	.st140{fill:url(#SVGID_254_);}
+	.st141{fill:url(#SVGID_255_);}
+	.st142{fill:url(#SVGID_256_);}
+	.st143{fill:url(#SVGID_257_);}
+	.st144{fill:url(#SVGID_258_);}
+	.st145{fill:url(#SVGID_259_);}
+	.st146{fill:url(#SVGID_260_);}
+	.st147{fill:url(#SVGID_261_);}
+	.st148{fill:url(#SVGID_262_);}
+	.st149{fill:url(#SVGID_263_);}
+	.st150{fill:url(#SVGID_264_);}
+	.st151{fill:url(#SVGID_265_);}
+	.st152{fill:url(#SVGID_266_);}
+	.st153{fill:url(#SVGID_267_);}
+	.st154{fill:url(#SVGID_268_);}
+	.st155{fill:url(#SVGID_269_);}
+	.st156{fill:url(#SVGID_270_);}
+	.st157{fill:url(#SVGID_271_);}
+	.st158{fill:url(#SVGID_272_);}
+	.st159{fill:url(#SVGID_273_);}
+	.st160{fill:url(#SVGID_274_);}
+	.st161{fill:url(#SVGID_275_);}
+	.st162{fill:url(#SVGID_276_);}
+	.st163{fill:url(#SVGID_277_);}
+	.st164{fill:url(#SVGID_278_);}
+	.st165{fill:url(#SVGID_279_);}
+	.st166{fill:url(#SVGID_280_);}
+	.st167{fill:url(#SVGID_281_);}
+	.st168{fill:url(#SVGID_282_);}
+	.st169{fill:url(#SVGID_283_);}
+	.st170{fill:url(#SVGID_284_);}
+	.st171{fill:url(#SVGID_285_);}
+	.st172{fill:url(#SVGID_286_);}
+	.st173{fill:url(#SVGID_287_);}
+	.st174{fill:url(#SVGID_288_);}
+	.st175{fill:url(#SVGID_289_);}
+	.st176{fill:url(#SVGID_290_);}
+	.st177{fill:url(#SVGID_291_);}
+	.st178{fill:url(#SVGID_292_);}
+	.st179{fill:url(#SVGID_293_);}
+	.st180{fill:url(#SVGID_294_);}
+	.st181{fill:url(#SVGID_295_);}
+	.st182{fill:url(#SVGID_296_);}
+	.st183{fill:url(#SVGID_297_);}
+	.st184{fill:url(#SVGID_298_);}
+	.st185{fill:url(#SVGID_299_);}
+	.st186{fill:url(#SVGID_300_);}
+	.st187{fill:url(#SVGID_301_);}
+	.st188{fill:url(#SVGID_302_);}
+	.st189{fill:url(#SVGID_303_);}
+	.st190{fill:url(#SVGID_304_);}
+	.st191{fill:url(#SVGID_305_);}
+	.st192{fill:url(#SVGID_306_);}
+	.st193{fill:url(#SVGID_307_);}
+	.st194{fill:url(#SVGID_308_);}
+	.st195{fill:url(#SVGID_309_);}
+	.st196{fill:url(#SVGID_310_);}
+	.st197{fill:url(#SVGID_311_);}
+	.st198{fill:url(#SVGID_312_);}
+	.st199{fill:url(#SVGID_313_);}
+	.st200{fill:url(#SVGID_314_);}
+	.st201{fill:none;stroke:url(#SVGID_315_);stroke-width:20;stroke-linecap:round;stroke-miterlimit:10;}
+	.st202{fill:url(#SVGID_316_);}
+	.st203{fill:url(#SVGID_317_);}
+	.st204{fill:none;stroke:#616CFE;stroke-width:20;stroke-linecap:round;stroke-miterlimit:10;}
+	.st205{fill:url(#SVGID_318_);}
+	.st206{fill:url(#SVGID_319_);}
+	.st207{fill:url(#SVGID_320_);}
+	.st208{fill:url(#SVGID_321_);}
+	.st209{fill:url(#SVGID_322_);}
+	.st210{fill:url(#SVGID_323_);}
+	.st211{fill:url(#SVGID_324_);}
+	.st212{fill:url(#SVGID_325_);}
+	.st213{fill:url(#SVGID_326_);}
+	.st214{fill:url(#SVGID_327_);}
+	.st215{fill:url(#SVGID_328_);}
+	.st216{fill:url(#SVGID_329_);}
+	.st217{fill:url(#SVGID_330_);}
+	.st218{fill:url(#SVGID_331_);}
+	.st219{fill:url(#SVGID_332_);}
+	.st220{fill:url(#SVGID_333_);}
+	.st221{fill:url(#SVGID_334_);}
+	.st222{fill:url(#SVGID_335_);}
+	.st223{fill:url(#SVGID_336_);}
+	.st224{fill:url(#SVGID_337_);}
+	.st225{fill:url(#SVGID_338_);}
+	.st226{fill:url(#SVGID_339_);}
+	.st227{fill:url(#SVGID_340_);}
+	.st228{fill:url(#SVGID_341_);}
+	.st229{fill:url(#SVGID_342_);}
+	.st230{fill:url(#SVGID_343_);}
+	.st231{fill:url(#SVGID_344_);}
+	.st232{fill:url(#SVGID_345_);}
+	.st233{fill:url(#SVGID_346_);}
+	.st234{fill:url(#SVGID_347_);}
+	.st235{fill:url(#SVGID_348_);}
+	.st236{fill:url(#SVGID_349_);}
+	.st237{fill:url(#SVGID_350_);}
+	.st238{fill:url(#SVGID_351_);}
+	.st239{fill:url(#SVGID_352_);}
+	.st240{fill:url(#SVGID_353_);}
+	.st241{fill:url(#SVGID_354_);}
+	.st242{fill:url(#SVGID_355_);}
+	.st243{fill:url(#SVGID_356_);}
+	.st244{fill:url(#SVGID_357_);}
+	.st245{fill:url(#SVGID_358_);}
+	.st246{fill:url(#SVGID_359_);}
+	.st247{fill:url(#SVGID_360_);}
+	.st248{fill:url(#SVGID_361_);}
+	.st249{fill:url(#SVGID_362_);}
+	.st250{fill:url(#SVGID_363_);}
+	.st251{fill:url(#SVGID_364_);}
+	.st252{fill:url(#SVGID_365_);}
+	.st253{fill:url(#SVGID_366_);}
+	.st254{fill:url(#SVGID_367_);}
+	.st255{fill:url(#SVGID_368_);}
+	.st256{fill:url(#SVGID_369_);}
+</style>
+    <g transform="matrix(1.2307692,0,0,1.2307692,-29.538462,-29.538462)">
+        <g transform="matrix(1,0,0,1,-1.2,-3)">
+            <g id="图层_1" class="st0">
+                <rect y="24" x="24" height="208" width="208" class="st1"/>
+            </g>
+            <g id="图层_2" class="st0">
+                <g class="st2">
+                    <g>
+                        <g id="图标网格_xFF08_导出需删除_xFF09__16_">
+                            <g id="网格_15_">
+                                <g>
+                                    <g>
+                                        <line y2="7.9" y1="7.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="15.9" y1="15.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="87.9" y1="87.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="79.9" y1="79.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="71.9" y1="71.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="63.9" y1="63.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="55.9" y1="55.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="47.9" y1="47.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="39.9" y1="39.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="31.9" y1="31.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="23.9" y1="23.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="95.9" y1="95.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="103.9" y1="103.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="175.9" y1="175.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="167.9" y1="167.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="159.9" y1="159.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="151.9" y1="151.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="143.9" y1="143.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="135.9" y1="135.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="127.9" y1="127.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="119.9" y1="119.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="111.9" y1="111.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="183.9" y1="183.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="191.9" y1="191.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="247.9" y1="247.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="239.9" y1="239.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="231.9" y1="231.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="223.9" y1="223.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="215.9" y1="215.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="207.9" y1="207.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                    <g>
+                                        <line y2="199.9" y1="199.9" x2="255.8" class="st4" x1="-0.2"/>
+                                    </g>
+                                </g>
+                                <g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="247.8" class="st4" x1="247.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="239.8" class="st4" x1="239.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="167.8" class="st4" x1="167.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="175.8" class="st4" x1="175.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="183.8" class="st4" x1="183.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="191.8" class="st4" x1="191.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="199.8" class="st4" x1="199.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="207.8" class="st4" x1="207.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="215.8" class="st4" x1="215.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="223.8" class="st4" x1="223.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="231.8" class="st4" x1="231.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="159.8" class="st4" x1="159.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="151.8" class="st4" x1="151.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="79.8" class="st4" x1="79.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="87.8" class="st4" x1="87.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="95.8" class="st4" x1="95.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="103.8" class="st4" x1="103.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="111.8" class="st4" x1="111.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="119.8" class="st4" x1="119.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="127.8" class="st4" x1="127.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="135.8" class="st4" x1="135.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="143.8" class="st4" x1="143.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="71.8" class="st4" x1="71.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="63.8" class="st4" x1="63.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="7.8" class="st4" x1="7.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="15.8" class="st4" x1="15.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="23.8" class="st4" x1="23.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="31.8" class="st4" x1="31.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="39.8" class="st4" x1="39.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="47.8" class="st4" x1="47.8"/>
+                                    </g>
+                                    <g>
+                                        <line y2="255.9" y1="-0.1" x2="55.8" class="st4" x1="55.8"/>
+                                    </g>
+                                </g>
+                            </g>
+                            <g id="比例示意_16_">
+                                <path id="Stroke-127_16_" class="st5" d="M39.1,224h177c4.1,0,7.5-3.4,7.5-7.5v-177c0-4.1-3.4-7.5-7.5-7.5h-177&#xa;&#x9;&#x9;&#x9;&#x9;&#x9;&#x9;c-4.1,0-7.5,3.4-7.5,7.5v177C31.6,220.6,34.9,224,39.1,224z"/>
+                                <polygon id="Stroke-128_16_" points="31.6,232 223.6,232 223.6,24 31.6,24 &#x9;&#x9;&#x9;&#x9;&#x9;" class="st5"/>
+                                <polygon id="Stroke-129_16_" points="23.6,224 231.6,224 231.6,32 23.6,32 &#x9;&#x9;&#x9;&#x9;&#x9;" class="st5"/>
+                                <path id="Stroke-130_16_" class="st5" d="M231.6,128c0,57.4-46.6,104-104,104c-57.4,0-104-46.6-104-104&#xa;&#x9;&#x9;&#x9;&#x9;&#x9;&#x9;c0-57.4,46.6-104,104-104C185,24,231.6,70.5,231.6,128z"/>
+                            </g>
+                            <g id="参考线_16_">
+                                <path id="Stroke-132_16_" class="st6" d="M175.3,128.1c0,26.5-21.5,48-48,48s-48-21.5-48-48s21.5-48,48-48&#xa;&#x9;&#x9;&#x9;&#x9;&#x9;&#x9;S175.3,101.6,175.3,128.1z"/>
+                                <line y2="256.1" y1="0.1" id="Stroke-134_16_" x2="-0.7" class="st6" x1="255.3"/>
+                                <line y2="256.1" y1="0.1" id="Stroke-136_16_" x2="255.3" class="st6" x1="-0.7"/>
+                                <rect y="0" x="-0.4" height="256" width="256" id="矩形_15_" class="st5"/>
+                            </g>
+                        </g>
+                        <g id="安全出血位_15_">
+                            <defs>
+                                <path id="SVGID_145_" d="M231.6,24h-208v208h208V24z M255.6,0v256h-256V0H255.6z"/>
+                            </defs>
+                            <clipPath id="SVGID_2_">
+                                <use xlink:href="#SVGID_145_" style="overflow:visible;"/>
+                            </clipPath>
+                            <g class="st7">
+                                <defs>
+                                    <rect y="0" x="-0.4" height="256" width="256" id="SVGID_147_"/>
+                                </defs>
+                                <clipPath id="SVGID_4_">
+                                    <use xlink:href="#SVGID_147_" style="overflow:visible;"/>
+                                </clipPath>
+                                <g class="st8">
+                                    <g>
+                                        <defs>
+                                            <rect y="-10" x="-10.4" height="276" width="276" id="SVGID_149_"/>
+                                        </defs>
+                                        <clipPath id="SVGID_6_">
+                                            <use xlink:href="#SVGID_149_" style="overflow:visible;"/>
+                                        </clipPath>
+                                        <g class="st9">
+                                            <defs>
+                                                <path id="SVGID_151_" d="M231.6,24h-208v208h208V24z M255.6,0v256h-256V0H255.6z"/>
+                                            </defs>
+                                            <clipPath id="SVGID_8_">
+                                                <use xlink:href="#SVGID_151_" style="overflow:visible;"/>
+                                            </clipPath>
+                                            <g class="st10">
+                                                <defs>
+                                                    <rect y="0" x="-0.4" height="256" width="256" id="SVGID_153_"/>
+                                                </defs>
+                                                <clipPath id="SVGID_10_">
+                                                    <use xlink:href="#SVGID_153_" style="overflow:visible;"/>
+                                                </clipPath>
+                                                <path class="st11" d="M231.6,24h-208v208h208V24z M255.6,0v256h-256V0H255.6z"/>
+                                            </g>
+                                        </g>
+                                        <g class="st9">
+                                            <defs>
+                                                <rect y="0" x="-0.4" height="256" width="256" id="SVGID_155_"/>
+                                            </defs>
+                                            <clipPath id="SVGID_12_">
+                                                <use xlink:href="#SVGID_155_" style="overflow:visible;"/>
+                                            </clipPath>
+                                            <path class="st12" d="M231.6,24h-208v208h208V24z M255.6,0v256h-256V0H255.6z"/>
+                                        </g>
+                                    </g>
+                                </g>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </g>
+            <g id="图层_3">
+                <linearGradient y2="185.6783" y1="214.0938" id="SVGID_14_" x2="132.0641" gradientUnits="userSpaceOnUse" x1="132.0641">
+                    <stop style="stop-color:#2E9EFE" offset="0"/>
+                    <stop style="stop-color:#6FC3FC" offset="1"/>
+                    <stop style="stop-color:#2E9EFE" offset="1"/>
+                </linearGradient>
+                <path style="fill:url(#SVGID_14_);" d="M102.7,210.6h58.7v-20.9h-58.7V210.6z"/>
+                <linearGradient y2="845.058" y1="892.0264" id="SVGID_16_" x2="113.1272" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.0199 0 0 -1.0199 13.8048 1107.5737)" x1="113.1272">
+                    <stop style="stop-color:#B8BCFF" offset="0"/>
+                    <stop style="stop-color:#3E4AFE" offset="1"/>
+                </linearGradient>
+                <path style="fill:url(#SVGID_16_);" d="M193.9,229.2H64.4c-4.8,0-8.3-4.2-7.2-8.7l0.5-2.1c1.2-4.9,5.8-8.3,11-8.3h120.8&#xa;&#x9;&#x9;c5.3,0,9.8,3.4,11,8.3l0.5,2.1C202.2,224.9,198.7,229.2,193.9,229.2z"/>
+                <radialGradient r="176.2424" cx="95.9135" id="SVGID_18_" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1 0 0 1.1661 0 -11.9693)" cy="51.9068">
+                    <stop style="stop-color:#ADE8F7" offset="0"/>
+                    <stop style="stop-color:#56B5FE" offset="0.4106"/>
+                    <stop style="stop-color:#2E9EFE" offset="0.8424"/>
+                    <stop style="stop-color:#3BA5FE" offset="1"/>
+                </radialGradient>
+                <path style="fill:url(#SVGID_18_);" d="M217.2,189.7h-176c-8.8,0-16-7.2-16-16V48.8c0-8.8,7.2-16,16-16h176c8.8,0,16,7.2,16,16&#xa;&#x9;&#x9;v124.9C233.2,182.5,226,189.7,217.2,189.7z"/>
+                <g>
+                    <g>
+                        <linearGradient y2="186.9424" y1="73.2314" id="SVGID_20_" x2="155.2003" gradientUnits="userSpaceOnUse" x1="116.1122">
+                            <stop style="stop-color:#FEFFFE" offset="8.278926e-02"/>
+                            <stop style="stop-color:#DCEFF7" offset="0.6554"/>
+                            <stop style="stop-color:#FEFFFE" offset="1"/>
+                        </linearGradient>
+                        <path style="fill:url(#SVGID_20_);" d="M185.3,161.3H73.1c-8.8,0-16-7.2-16-16v-68c0-8.8,7.2-16,16-16h112.2c8.8,0,16,7.2,16,16&#xa;&#x9;&#x9;&#x9;&#x9;v68C201.3,154.1,194.1,161.3,185.3,161.3z"/>
+                    </g>
+                    <g>
+                        <linearGradient y2="186.9424" y1="73.2314" id="SVGID_22_" x2="155.2003" gradientUnits="userSpaceOnUse" x1="116.1122">
+                            <stop style="stop-color:#FEFFFE" offset="8.278926e-02"/>
+                            <stop style="stop-color:#DCEFF7" offset="0.6554"/>
+                            <stop style="stop-color:#FEFFFE" offset="1"/>
+                        </linearGradient>
+                        <path style="fill:url(#SVGID_22_);" d="M185.3,161.3H73.1c-8.8,0-16-7.2-16-16v-68c0-8.8,7.2-16,16-16h112.2c8.8,0,16,7.2,16,16&#xa;&#x9;&#x9;&#x9;&#x9;v68C201.3,154.1,194.1,161.3,185.3,161.3z"/>
+                    </g>
+                </g>
+                <linearGradient y2="81.5989" y1="127.4107" id="SVGID_24_" x2="124.9478" gradientUnits="userSpaceOnUse" x1="131.4923">
+                    <stop style="stop-color:#E85F92" offset="0"/>
+                    <stop style="stop-color:#EAB8AE" offset="1"/>
+                </linearGradient>
+                <path style="fill:url(#SVGID_24_);" d="M160,102.1h-1.4c-0.6-1.8-1.3-3.5-2.2-5.2l1-1c3-3,3-7.9,0-10.9l-2-2c-3-3-7.9-3-10.9,0&#xa;&#x9;&#x9;l-1,1c-1.7-0.9-3.4-1.6-5.2-2.2v-1.4c0-4.2-3.5-7.7-7.7-7.7h-2.9c-4.2,0-7.7,3.5-7.7,7.7v1.4c-1.8,0.6-3.5,1.3-5.2,2.2l-1-1&#xa;&#x9;&#x9;c-3-3-7.9-3-10.9,0l-2,2c-3,3-3,7.9,0,10.9l1,1c-0.9,1.7-1.6,3.4-2.2,5.2h-1.4c-4.2,0-7.7,3.5-7.7,7.7v2.9c0,4.2,3.5,7.7,7.7,7.7&#xa;&#x9;&#x9;h1.4c0.6,1.8,1.3,3.5,2.2,5.2l-1,1c-3,3-3,7.9,0,10.9l2,2c1.4,1.4,3.4,2.3,5.4,2.2l0,0c2,0,4-0.8,5.5-2.2l1-1&#xa;&#x9;&#x9;c1.7,0.9,3.4,1.6,5.2,2.2v1.4c0,4.2,3.5,7.7,7.7,7.7h2.9h0c4.2,0,7.7-3.5,7.7-7.7v-1.4c1.8-0.6,3.5-1.3,5.2-2.2l1,1&#xa;&#x9;&#x9;c1.4,1.4,3.4,2.3,5.4,2.2h0c2,0,4-0.8,5.4-2.3l2-2c3-3,3-7.9,0-10.9l-1-1c0.9-1.7,1.6-3.4,2.2-5.2h1.4c4.2,0,7.7-3.5,7.7-7.7v-2.9&#xa;&#x9;&#x9;C167.7,105.6,164.2,102.1,160,102.1z"/>
+                <linearGradient y2="127.6846" y1="103.0104" id="SVGID_26_" x2="134.8305" gradientUnits="userSpaceOnUse" x1="126.3487">
+                    <stop style="stop-color:#FEFFFE" offset="8.278926e-02"/>
+                    <stop style="stop-color:#DCEFF7" offset="0.6554"/>
+                    <stop style="stop-color:#FEFFFE" offset="1"/>
+                </linearGradient>
+                <circle r="14.4" cx="129.2" style="fill:url(#SVGID_26_);" cy="111.3"/>
+            </g>
+        </g>
+    </g>
+</svg>
