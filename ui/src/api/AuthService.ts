@@ -15,6 +15,61 @@ type LoginResponse = {
 const ACCESS_TOKEN_KEY = "access_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
 const USER_KEY = "auth_user";
+const AUTH_EVENT_NAME = "auth:change";
+
+type AuthChangeDetail = {
+  status: "login" | "logout";
+  user?: any;
+};
+
+type AuthChangeListener = (detail: AuthChangeDetail) => void;
+
+function dispatchAuthEvent(detail: AuthChangeDetail) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const payload = detail;
+
+  try {
+    window.dispatchEvent(new CustomEvent<AuthChangeDetail>(AUTH_EVENT_NAME, { detail: payload }));
+    return;
+  } catch (error) {
+    // Older browsers (or jsdom) may not support the CustomEvent constructor; fall back.
+  }
+
+  try {
+    if (typeof document !== "undefined" && typeof document.createEvent === "function") {
+      const legacyEvent = document.createEvent("CustomEvent");
+      legacyEvent.initCustomEvent(AUTH_EVENT_NAME, false, false, payload);
+      window.dispatchEvent(legacyEvent);
+      return;
+    }
+  } catch {
+    // If even the legacy path fails, silently ignore. Consumers will rely on explicit refreshes.
+  }
+}
+
+export function subscribeAuthChange(listener: AuthChangeListener): () => void {
+  if (typeof window === "undefined") {
+    return () => undefined;
+  }
+
+  const handler = (event: Event) => {
+    const customEvent = event as CustomEvent<AuthChangeDetail>;
+    const detail = customEvent.detail;
+    if (!detail) {
+      return;
+    }
+    listener(detail);
+  };
+
+  window.addEventListener(AUTH_EVENT_NAME, handler as EventListener);
+
+  return () => {
+    window.removeEventListener(AUTH_EVENT_NAME, handler as EventListener);
+  };
+}
 
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
@@ -56,6 +111,7 @@ export function clearTokens() {
   clearAccessToken();
   setRefreshToken(null);
   setUser(undefined);
+  dispatchAuthEvent({ status: "logout" });
 }
 
 function setUser(user: any | undefined) {
@@ -129,6 +185,7 @@ export async function login(username: string, password: string): Promise<LoginRe
     setAccessToken(data.access_token);
     if (data.refresh_token) setRefreshToken(data.refresh_token);
     setUser(data.user);
+    dispatchAuthEvent({ status: "login", user: data.user ?? getUser() });
   }
   return data;
 }
@@ -206,6 +263,7 @@ const AuthService = {
   isLoggedIn,
   getUser,
   redirectToLogin,
+  subscribeAuthChange,
 };
 
 export default AuthService;
