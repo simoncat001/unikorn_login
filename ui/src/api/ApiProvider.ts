@@ -1,25 +1,8 @@
 import { refresh, getAccessToken, redirectToLogin } from "./AuthService";
 import { LOGIN_PATH } from "../common/Path";
+import { resolveApiUrl } from "./config";
 
 type HttpMethod = "GET" | "POST" | "DELETE";
-
-const API_BASE = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
-
-const resolveUrl = (url: string) => {
-  if (!API_BASE || /^https?:\/\//i.test(url)) {
-    return url;
-  }
-
-  if (API_BASE.endsWith("/api") && url.startsWith("/api/")) {
-    return `${API_BASE}${url.substring(4)}`;
-  }
-
-  if (url.startsWith("/")) {
-    return `${API_BASE}${url}`;
-  }
-
-  return `${API_BASE}/${url}`;
-};
 
 function createHeaders(source?: HeadersInit): Record<string, string> {
   const headers: Record<string, string> = {};
@@ -131,7 +114,7 @@ function buildRequestInit(
 async function apiProviderGet(url: string, config?: RequestInit): Promise<Response> {
   try {
     const requestInit = buildRequestInit("GET", config);
-    return await executeWithAuth(resolveUrl(url), requestInit, {
+    return await executeWithAuth(resolveApiUrl(url), requestInit, {
       throwOnError: true,
     });
   } catch (error) {
@@ -151,7 +134,7 @@ async function apiProviderPost(
       isFormData,
       body: postData,
     });
-    return await executeWithAuth(resolveUrl(url), requestInit, {
+    return await executeWithAuth(resolveApiUrl(url), requestInit, {
       throwOnError: false,
     });
   } catch (error) {
@@ -163,7 +146,7 @@ async function apiProviderPost(
 async function apiProviderDelete(url: string, config?: RequestInit): Promise<Response> {
   try {
     const requestInit = buildRequestInit("DELETE", config);
-    return await executeWithAuth(resolveUrl(url), requestInit, {
+    return await executeWithAuth(resolveApiUrl(url), requestInit, {
       throwOnError: false,
     });
   } catch (error) {

@@ -1,3 +1,5 @@
+import { resolveApiUrl } from "./config";
+
 /* Lightweight auth service for username/password login flow.
  * Stores access_token in sessionStorage + memory; refresh_token stays in HttpOnly cookie (set by server).
  */
@@ -17,21 +19,6 @@ const USER_KEY = "auth_user";
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
 let isLoggingOut = false;
-
-const API_BASE = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
-
-function resolveApiUrl(path: string): string {
-  if (!API_BASE || /^https?:\/\//i.test(path)) {
-    return path;
-  }
-  if (API_BASE.endsWith("/api") && path.startsWith("/api/")) {
-    return `${API_BASE}${path.substring(4)}`;
-  }
-  if (path.startsWith("/")) {
-    return `${API_BASE}${path}`;
-  }
-  return `${API_BASE}/${path}`;
-}
 
 function initFromStorage() {
   try {

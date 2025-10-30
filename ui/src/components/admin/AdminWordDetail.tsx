@@ -257,8 +257,6 @@ const AdminWordDetail: React.FC<RouteComponentProps<{ id: string }>> = ({
   match,
 }) => {
   const classes = useStyles();
-  const fontClasses = Common.fontStyles();
-
   return (
     <Box display="flex" flexDirection="column" marginTop="80px">
       <Box display="flex">
