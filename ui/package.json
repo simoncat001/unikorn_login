@@ -17,7 +17,6 @@
     "@types/react-dom": "^17.0.5",
     "@types/react-router-dom": "^5.1.7",
     "axios": "^0.21.1",
-    "env-cmd": "^10.1.0",
     "http-proxy-middleware": "^2.0.0",
     "jschardet": "^3.0.0",
     "prettier": "^2.3.0",
@@ -32,13 +31,13 @@
     "web-vitals": "^1"
   },
   "scripts": {
-    "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider env-cmd -f .env.dev react-scripts start",
-    "start:prod": "cross-env NODE_OPTIONS=--openssl-legacy-provider env-cmd -f .env.prod react-scripts start",
-    "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider env-cmd -f .env.dev react-scripts build",
-    "build:beta": "cross-env NODE_OPTIONS=--openssl-legacy-provider env-cmd -f .env.beta react-scripts build",
-    "build:prod": "cross-env NODE_OPTIONS=--openssl-legacy-provider env-cmd -f .env.prod react-scripts build",
+    "start": "node scripts/run-with-env.js start .env.dev",
+    "start:prod": "node scripts/run-with-env.js start .env.prod",
+    "build": "node scripts/run-with-env.js build .env.dev",
+    "build:beta": "node scripts/run-with-env.js build .env.beta",
+    "build:prod": "node scripts/run-with-env.js build .env.prod",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
-    "test": "react-scripts test",
+    "test": "node scripts/run-with-env.js test .env.dev",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -60,8 +59,7 @@
     ]
   },
   "devDependencies": {
-    "@types/minimatch": "^5.1.2",
-    "cross-env": "^10.1.0"
+    "@types/minimatch": "^5.1.2"
   },
   "resolutions": {
     "eslint": "^7.11.0",
