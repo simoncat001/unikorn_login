@@ -12,8 +12,6 @@ import { ListStateIcon } from "./Icon";
 import { useStyles, btnList, rowsPerPage } from "./ListResultUtils";
 import ReviewStatusUtils, {
   REVIEW_STATUS_DRAFT,
-  REVIEW_STATUS_PASSED_REVIEW_PREVIEW,
-  REVIEW_STATUS_PASSED_REVIEW,
 } from "../common/ReviewStatusUtils";
 import {
   TableHeadData,

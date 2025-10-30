@@ -12,7 +12,6 @@ import Common from "../../common/Common";
 import AdminService from "../../api/AdminService";
 import UserService from "../../api/UserService";
 import { RouteComponentProps } from "react-router";
-import { Link, useHistory } from "react-router-dom";
 import {
   ADMIN_WORDS_PATH,
   ADMIN_TEMPLATES_PATH,
