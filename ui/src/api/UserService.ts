@@ -75,7 +75,7 @@ const navigateToLogin = () => {
 
 const navigateToLogout = async () => {
   // 使用AuthService的注销方法，完全使用后端JWT认证的注销流程
-  AuthService.logout();
+  await AuthService.logout();
 };
 
 const navigateToErrorPage = () => {
