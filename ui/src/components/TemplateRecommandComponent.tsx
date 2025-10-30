@@ -6,7 +6,7 @@ import Common from "../common/Common";
 //import FormControl from "@material-ui/core/FormControl";
 //import FormGroup from "@material-ui/core/FormGroup";
 //import FormControlLabel from "@material-ui/core/FormControlLabel";
-import { Container, InputAdornment } from "@material-ui/core";
+import { Container } from "@material-ui/core";
 //import { Button, TextField } from "@material-ui/core";
 import TemplateSearchBar, { State } from "../pages/templateRecommand/TemplateSearchBar";
 import SearchService, { ResultList } from "../api/SearchService";

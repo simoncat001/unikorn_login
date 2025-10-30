@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef, ReactNode } from "react";
 import Form, { FormProps } from '@rjsf/core';
 import { makeStyles, Theme, createStyles } from "@material-ui/core/styles";
 import Button from "@material-ui/core/Button";
@@ -133,44 +133,181 @@ const WebSubmit: React.FC<{
   const [alertOpen, setAlertOpen] = useState(false);
   const [errorState, setErrorCode] = useState(0);
   const [submitFlag, setSubmitFlag] = useState(""); // 状态提升
-   // 检查字段是否是文件上传类型
- const isFileField = useCallback((fieldName: string) => {
-   // ...
- }, [templateSchema]);
+  const latestFilesRef = useRef<Record<string, File | File[]>>({});
 
- // 检查是否有文件上传字段
- const hasFileFields = useCallback(() => {
-   // ...
- }, [templateSchema]);
+  const resolveSchemaByPath = useCallback(
+    (fieldPath: string): JSONSchema7 | undefined => {
+      if (!templateSchema) {
+        return undefined;
+      }
 
- // 上传文件函数（带重试机制）
- const uploadFileWithRetry = useCallback(
-   async (file, fieldPath, retries, delay, attempt) => {
-     // ...
-   },
-   [onFileUploadProgress]
- );
+      const segments = fieldPath.split(".").filter(Boolean);
+      let current: JSONSchema7 | undefined = templateSchema;
 
- // 处理文件字段的值变化（触发上传）
- const handleFileFieldChange = useCallback(
-   async (fieldPath: string, newValue: any) => {
-     // ...
-   },
-   [isFileField, uploadFileWithRetry]
- );
+      for (const segment of segments) {
+        if (!current) {
+          return undefined;
+        }
 
- // 重试所有上传失败的文件
- const retryFailedUploads = useCallback(async () => {
-   // ...
- }, [fileUploadStatus, devCreateData, handleFileFieldChange]);
+        if (current.type === "array") {
+          const items = current.items;
+          if (!items || typeof items !== "object") {
+            return undefined;
+          }
+          current = items as JSONSchema7;
+          if (/^\d+$/.test(segment)) {
+            continue;
+          }
+        }
 
- // 处理表单字段变化
- const handleFieldChange = useCallback(
-   async (fieldPath: string, newValue: any) => {
-     // ...
-   },
-   [handleFileFieldChange]
- );
+        if (!current.properties || !current.properties[segment]) {
+          return undefined;
+        }
+
+        const next = current.properties[segment];
+        if (!next || typeof next !== "object") {
+          return undefined;
+        }
+
+        current = next as JSONSchema7;
+      }
+
+      return current;
+    },
+    [templateSchema]
+  );
+
+  const isFileField = useCallback(
+    (fieldPath: string) => {
+      const schemaForField = resolveSchemaByPath(fieldPath);
+      if (!schemaForField) {
+        return false;
+      }
+
+      if (schemaForField.type === "string") {
+        return (
+          schemaForField.format === "data-url" ||
+          schemaForField.contentEncoding === "base64"
+        );
+      }
+
+      if (
+        schemaForField.type === "array" &&
+        schemaForField.items &&
+        typeof schemaForField.items === "object"
+      ) {
+        const itemSchema = schemaForField.items as JSONSchema7;
+        return (
+          itemSchema.type === "string" &&
+          (itemSchema.format === "data-url" || itemSchema.contentEncoding === "base64")
+        );
+      }
+
+      const uiWidget = (schemaForField as Record<string, unknown>)["ui:widget"];
+      return uiWidget === "file";
+    },
+    [resolveSchemaByPath]
+  );
+
+  const uploadFileWithRetry = useCallback(
+    async (
+      file: File,
+      fieldPath: string,
+      retries = 3,
+      initialDelay = 1000
+    ): Promise<string> => {
+      let attempt = 0;
+      let delay = initialDelay;
+
+      while (attempt <= retries) {
+        try {
+          onFileUploadProgress?.(fieldPath, 0, "uploading");
+          const url = await DevelopmentDataService.uploadFile(file, (progress) => {
+            onFileUploadProgress?.(fieldPath, progress, "uploading");
+          });
+          onFileUploadProgress?.(fieldPath, 100, "completed");
+          return url;
+        } catch (error) {
+          attempt += 1;
+          onFileUploadProgress?.(fieldPath, 0, "error");
+          if (attempt > retries) {
+            throw error;
+          }
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay *= 2;
+        }
+      }
+
+      throw new Error("UPLOAD_FAILED");
+    },
+    [onFileUploadProgress]
+  );
+
+  const handleFileFieldChange = useCallback(
+    async (fieldPath: string, newValue: any) => {
+      if (!isFileField(fieldPath)) {
+        setDevCreateData((prev) => ({
+          ...prev,
+          [fieldPath]: newValue,
+        }));
+        return;
+      }
+
+      if (Array.isArray(newValue) && newValue.length === 0) {
+        onFileUploadProgress?.(fieldPath, 0, "idle");
+        setDevCreateData((prev) => ({
+          ...prev,
+          [fieldPath]: [],
+        }));
+        delete latestFilesRef.current[fieldPath];
+        return;
+      }
+
+      const candidateList = Array.isArray(newValue) ? newValue : [newValue];
+      const containsFile = candidateList.some((item) => item instanceof File);
+      if (containsFile) {
+        latestFilesRef.current[fieldPath] = newValue;
+      } else {
+        delete latestFilesRef.current[fieldPath];
+      }
+
+      try {
+        const uploadedValues = await Promise.all(
+          candidateList.map(async (item) => {
+            if (item instanceof File) {
+              return uploadFileWithRetry(item, fieldPath);
+            }
+            return item;
+          })
+        );
+
+        setDevCreateData((prev) => ({
+          ...prev,
+          [fieldPath]: Array.isArray(newValue)
+            ? uploadedValues
+            : uploadedValues[0],
+        }));
+      } catch (error) {
+        console.error("文件上传失败", error);
+      }
+    },
+    [isFileField, uploadFileWithRetry, onFileUploadProgress]
+  );
+
+  const handleFieldChange = useCallback(
+    async (fieldPath: string, newValue: any) => {
+      if (isFileField(fieldPath)) {
+        await handleFileFieldChange(fieldPath, newValue);
+        return;
+      }
+
+      setDevCreateData((prev) => ({
+        ...prev,
+        [fieldPath]: newValue,
+      }));
+    },
+    [handleFileFieldChange, isFileField]
+  );
 
   useEffect(() => {
     void (() => {
@@ -289,9 +426,73 @@ const WebSubmit: React.FC<{
       UserService.navigateToErrorPage();
     }
   };
-   // 渲染文件上传进度组件
+  // 渲染文件上传进度组件
   const renderFileUploadProgress = () => {
-   // ...
+    const entries = Object.entries(fileUploadStatus);
+    if (entries.length === 0) {
+      return null;
+    }
+
+    const statusLabel: Record<string, string> = {
+      idle: "等待上传",
+      uploading: "上传中",
+      completed: "上传完成",
+      error: "上传失败",
+    };
+
+    return (
+      <Box className={classes.fileUploadContainer}>
+        {entries.map(([fieldPath, statusInfo]) => {
+          const { progress, status } = statusInfo;
+          const latestSelection = latestFilesRef.current[fieldPath];
+          const canRetry = status === "error" && latestSelection;
+
+          let icon: ReactNode = null;
+          if (status === "completed") {
+            icon = <CheckCircleOutlineIcon color="primary" />;
+          } else if (status === "error") {
+            icon = <ErrorOutlineIcon color="error" />;
+          } else if (status === "uploading") {
+            icon = <CircularProgress size={18} />;
+          }
+
+          return (
+            <Box key={fieldPath} className={classes.uploadSection}>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="subtitle2">{fieldPath}</Typography>
+                {canRetry && (
+                  <Button
+                    size="small"
+                    color="secondary"
+                    onClick={() => void handleFileFieldChange(fieldPath, latestSelection)}
+                  >
+                    重试
+                  </Button>
+                )}
+              </Box>
+              <Box className={classes.progressContainer}>
+                <LinearProgress
+                  variant="determinate"
+                  value={progress}
+                  className={classes.progressBar}
+                />
+                {icon ? (
+                  <Tooltip title={statusLabel[status] || ""}>
+                    <span className={classes.statusIcon}>{icon}</span>
+                  </Tooltip>
+                ) : null}
+                <Typography variant="body2">{`${progress}%`}</Typography>
+              </Box>
+              {status === "error" && (
+                <Typography className={classes.errorText}>
+                  上传失败，请重试。
+                </Typography>
+              )}
+            </Box>
+          );
+        })}
+      </Box>
+    );
   };
 
   if (!isLoaded) {
