@@ -1,4 +1,3 @@
-import BackendEndpoints from "./BackendEndpoints";
 import ApiProvider from "./ApiProvider";
 import AuthService from "./AuthService";
 import { ERROR_PATH, NOT_FOUND_PATH } from "../common/Path";
@@ -78,8 +77,11 @@ const navigateToLogin = () => {
 };
 
 const navigateToLogout = async () => {
-  // 使用AuthService的注销方法，完全使用后端JWT认证的注销流程
-  await AuthService.logout();
+  try {
+    await AuthService.logout();
+  } finally {
+    AuthService.redirectToLogin("/");
+  }
 };
 
 const navigateToErrorPage = () => {
