@@ -28,6 +28,7 @@ import {
 import Common from "../common/Common";
 import AdminService from "../api/AdminService";
 import UserService from "../api/UserService";
+import { subscribeAuthChange } from "../api/AuthService";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -133,24 +134,44 @@ const MainAppBar: React.FC = () => {
     prevOpen.current = menuOpen;
   }, [menuOpen]);
 
-  React.useEffect(() => {
-    void (async () => {
-      try {
-        const loginCheck = await UserService.isLoggedIn();
-        setIsLoggedIn(loginCheck);
-        setIsChecked(true);
-        if (loginCheck) {
-          const adminCheck = await AdminService.checkAdmin();
-          setIsAdmin(adminCheck);
-          const userName = await UserService.getUserDisplayName();
-          setUserName(userName);
-        }
-      } catch (e) {
-        console.error(e);
-        throw e;
+  const refreshUserState = React.useCallback(async () => {
+    try {
+      const loginCheck = await UserService.isLoggedIn();
+      setIsLoggedIn(loginCheck);
+      setIsChecked(true);
+      if (loginCheck) {
+        const adminCheck = await AdminService.checkAdmin();
+        setIsAdmin(adminCheck);
+        const name = await UserService.getUserDisplayName();
+        setUserName(name);
+      } else {
+        setIsAdmin(false);
+        setUserName("");
       }
-    })();
+    } catch (error) {
+      console.error(error);
+    }
   }, []);
+
+  React.useEffect(() => {
+    void refreshUserState();
+  }, [refreshUserState]);
+
+  React.useEffect(() => {
+    const unsubscribe = subscribeAuthChange((detail) => {
+      if (detail.status === "logout") {
+        setIsLoggedIn(false);
+        setIsAdmin(false);
+        setUserName("");
+        setIsChecked(true);
+        setMenuOpen(false);
+      } else if (detail.status === "login") {
+        void refreshUserState();
+      }
+    });
+
+    return unsubscribe;
+  }, [refreshUserState]);
 
   function changeUserColorMouseOver() {
     setUsercolor(Common.allColor.primaryColor);
