@@ -16,6 +16,7 @@ const ACCESS_TOKEN_KEY = "access_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
 const USER_KEY = "auth_user";
 const AUTH_EVENT_NAME = "auth:change";
+const LOGOUT_MARKER_KEY = "auth_force_relogin";
 
 type AuthChangeDetail = {
   status: "login" | "logout";
@@ -75,6 +76,26 @@ let accessToken: string | null = null;
 let refreshToken: string | null = null;
 let isLoggingOut = false;
 
+function markLogoutRequired() {
+  try {
+    sessionStorage.setItem(LOGOUT_MARKER_KEY, Date.now().toString());
+  } catch { }
+}
+
+function clearLogoutMarker() {
+  try {
+    sessionStorage.removeItem(LOGOUT_MARKER_KEY);
+  } catch { }
+}
+
+function hasLogoutMarker(): boolean {
+  try {
+    return sessionStorage.getItem(LOGOUT_MARKER_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
 function initFromStorage() {
   try {
     const t = sessionStorage.getItem(ACCESS_TOKEN_KEY);
@@ -90,6 +111,7 @@ function setAccessToken(token: string) {
   try {
     sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
   } catch { }
+  clearLogoutMarker();
 }
 
 function setRefreshToken(token: string | null) {
@@ -98,6 +120,9 @@ function setRefreshToken(token: string | null) {
     if (token) sessionStorage.setItem(REFRESH_TOKEN_KEY, token);
     else sessionStorage.removeItem(REFRESH_TOKEN_KEY);
   } catch { }
+  if (token) {
+    clearLogoutMarker();
+  }
 }
 
 function clearAccessToken() {
@@ -111,6 +136,7 @@ export function clearTokens() {
   clearAccessToken();
   setRefreshToken(null);
   setUser(undefined);
+  markLogoutRequired();
   dispatchAuthEvent({ status: "logout" });
 }
 
@@ -185,6 +211,7 @@ export async function login(username: string, password: string): Promise<LoginRe
     setAccessToken(data.access_token);
     if (data.refresh_token) setRefreshToken(data.refresh_token);
     setUser(data.user);
+    clearLogoutMarker();
     dispatchAuthEvent({ status: "login", user: data.user ?? getUser() });
   }
   return data;
@@ -210,6 +237,7 @@ export async function refresh(): Promise<string> {
   setAccessToken(data.access_token);
   if (data.refresh_token) setRefreshToken(data.refresh_token);
   if (data.user) setUser(data.user);
+  clearLogoutMarker();
   return data.access_token;
 }
 
@@ -234,7 +262,14 @@ export function getAccessToken(): string | null {
 }
 
 export function isLoggedIn(): boolean {
+  if (hasLogoutMarker()) {
+    return false;
+  }
   return !isExpiredOrMissing(accessToken);
+}
+
+export function wasExplicitlyLoggedOut(): boolean {
+  return hasLogoutMarker();
 }
 
 export function redirectToLogin(next?: string) {
@@ -261,6 +296,7 @@ const AuthService = {
   clearTokens,
   getAccessToken,
   isLoggedIn,
+  wasExplicitlyLoggedOut,
   getUser,
   redirectToLogin,
   subscribeAuthChange,
