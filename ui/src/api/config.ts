@@ -23,7 +23,25 @@ function computeBaseFromWindow(): string {
 }
 
 const rawEnvBase = (process.env.REACT_APP_API_URL || "").trim();
-const API_BASE = rawEnvBase ? normalizeBase(rawEnvBase) : computeBaseFromWindow();
+
+function shouldIgnoreEnvBase(): boolean {
+  if (!rawEnvBase) {
+    return false;
+  }
+
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const port = window.location.port;
+  return DEV_SERVER_PORTS.has(port);
+}
+
+const API_BASE = shouldIgnoreEnvBase()
+  ? ""
+  : rawEnvBase
+  ? normalizeBase(rawEnvBase)
+  : computeBaseFromWindow();
 
 export function resolveApiUrl(path: string): string {
   if (!API_BASE || /^https?:\/\//i.test(path)) {
