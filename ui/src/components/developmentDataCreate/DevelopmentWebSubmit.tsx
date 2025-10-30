@@ -312,9 +312,19 @@ const WebSubmit: React.FC<{
 
   useEffect(() => {
     void (() => {
-      if (fileToWebFlag) {
-        if (devCreateDataFromFile) {
-          setDevCreateData(devCreateDataFromFile as Record<string, unknown>);
+      if (fileToWebFlag && devCreateDataFromFile) {
+        const candidate = devCreateDataFromFile as unknown;
+        if (
+          candidate !== null &&
+          typeof candidate === "object" &&
+          !Array.isArray(candidate)
+        ) {
+          setDevCreateData(candidate as Record<string, unknown>);
+        } else {
+          console.warn(
+            "忽略了无法解析的文件表单数据",
+            devCreateDataFromFile
+          );
         }
       }
     })();
