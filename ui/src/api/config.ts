@@ -1,4 +1,3 @@
-const DEFAULT_DEV_PORT = "8000";
 const DEV_SERVER_PORTS = new Set(["3000", "3001", "5173", "4173"]);
 
 function normalizeBase(base: string): string {
@@ -13,7 +12,7 @@ function computeBaseFromWindow(): string {
   const { protocol, hostname, port } = window.location;
 
   if (DEV_SERVER_PORTS.has(port)) {
-    return normalizeBase(`${protocol}//${hostname}:${DEFAULT_DEV_PORT}`);
+    return "";
   }
 
   if (port) {
