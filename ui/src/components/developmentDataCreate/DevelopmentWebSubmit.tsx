@@ -129,7 +129,7 @@ const WebSubmit: React.FC<{
   const [templateWordOrder, setTemplateWordOrder] =
     useState<LayeredWordOrder[]>();
 
-  const [devCreateData, setDevCreateData] = useState(JSON.parse("{}"));
+  const [devCreateData, setDevCreateData] = useState<Record<string, unknown>>({});
   const [isLoaded, setIsLoaded] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
   const [errorState, setErrorCode] = useState(0);
@@ -313,7 +313,9 @@ const WebSubmit: React.FC<{
   useEffect(() => {
     void (() => {
       if (fileToWebFlag) {
-        setDevCreateData(devCreateDataFromFile);
+        if (devCreateDataFromFile) {
+          setDevCreateData(devCreateDataFromFile as Record<string, unknown>);
+        }
       }
     })();
   }, [fileToWebFlag, devCreateDataFromFile]);
@@ -337,7 +339,9 @@ const WebSubmit: React.FC<{
         if (isEdit) {
           const devDataObject: DevelopmentData =
             await DevelopmentDataService.getDevData(devDataId);
-          setDevCreateData(devDataObject.json_data.origin_post_data);
+          setDevCreateData(
+            devDataObject.json_data.origin_post_data as Record<string, unknown>
+          );
         }
         setIsLoaded(true);
       } catch (e) {
@@ -518,7 +522,7 @@ const WebSubmit: React.FC<{
         uiSchema={uiSchema}
         onSubmit={onSubmit}
         onChange={(form: FormProps<any>) => {
-          setDevCreateData(form.formData);
+          setDevCreateData(form.formData as Record<string, unknown>);
         }}
         onFileFieldChange={handleFieldChange}
       >
