@@ -50,6 +50,12 @@ function clearAccessToken() {
   } catch { }
 }
 
+export function clearTokens() {
+  clearAccessToken();
+  setRefreshToken(null);
+  setUser(undefined);
+}
+
 function setUser(user: any | undefined) {
   try {
     if (user) sessionStorage.setItem(USER_KEY, JSON.stringify(user));
@@ -158,9 +164,7 @@ export async function logout(): Promise<void> {
   } catch (error) {
     console.warn("Failed to notify backend about logout", error);
   }
-  clearAccessToken();
-  setRefreshToken(null);
-  setUser(undefined);
+  clearTokens();
 }
 
 export function getAccessToken(): string | null {
@@ -192,6 +196,7 @@ const AuthService = {
   login,
   refresh,
   logout,
+  clearTokens,
   getAccessToken,
   isLoggedIn,
   getUser,
