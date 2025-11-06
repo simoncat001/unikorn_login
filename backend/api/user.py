@@ -22,7 +22,7 @@ router = APIRouter()
 
 
 REFRESH_COOKIE_NAME = "refresh_token"
-ACCESS_COOKIE_NAME = "access_token"
+ACCESS_COOKIE_NAME = auth.ACCESS_COOKIE_NAME
 
 
 def _cookie_secure_default() -> bool:
@@ -51,6 +51,20 @@ def _set_refresh_cookie(response: Response, token: str):
     )
 
 
+def _set_access_cookie(response: Response, token: str):
+    """Persist access token in an HttpOnly cookie for proxy compatibility."""
+    response.set_cookie(
+        key=ACCESS_COOKIE_NAME,
+        value=token,
+        httponly=True,
+        secure=_cookie_secure_default(),
+        samesite=_cookie_samesite(),
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path=settings.AUTH_COOKIE_PATH,
+        domain=settings.AUTH_COOKIE_DOMAIN,
+    )
+
+
 @router.post("/api/token", response_model=auth.Token)
 async def login_for_access_token(
     response: Response,
@@ -70,6 +84,7 @@ async def login_for_access_token(
     )
     refresh_token = auth.create_refresh_token(user.user_name)
     _set_refresh_cookie(response, refresh_token)
+    _set_access_cookie(response, access_token)
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 
@@ -85,6 +100,7 @@ def refresh_token(
         raise HTTPException(status_code=400, detail="Missing refresh_token")
     pair = auth.refresh_access_token(token)
     _set_refresh_cookie(response, pair.refresh_token)
+    _set_access_cookie(response, pair.access_token)
     return pair
 
 
