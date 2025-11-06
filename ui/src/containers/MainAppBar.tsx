@@ -136,6 +136,8 @@ const MainAppBar: React.FC = () => {
 
   const refreshUserState = React.useCallback(async () => {
     try {
+      setUserName("");
+      setIsAdmin(false);
       const loginCheck = await UserService.isLoggedIn();
       setIsLoggedIn(loginCheck);
       setIsChecked(true);
@@ -150,6 +152,8 @@ const MainAppBar: React.FC = () => {
       }
     } catch (error) {
       console.error(error);
+      setUserName("");
+      setIsAdmin(false);
     }
   }, []);
 
@@ -166,6 +170,15 @@ const MainAppBar: React.FC = () => {
         setIsChecked(true);
         setMenuOpen(false);
       } else if (detail.status === "login") {
+        if (detail.user && typeof detail.user === "object") {
+          const displayName =
+            (detail.user.display_name as string | undefined) ||
+            (detail.user.username as string | undefined) ||
+            "";
+          if (displayName) {
+            setUserName(displayName);
+          }
+        }
         void refreshUserState();
       }
     });

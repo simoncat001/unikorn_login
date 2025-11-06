@@ -157,6 +157,32 @@ function getUser(): any | null {
   }
 }
 
+async function fetchCurrentUser(): Promise<any | null> {
+  try {
+    const headers: Record<string, string> = { Accept: "application/json" };
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+    const response = await fetch(resolveApiUrl("/api/userinfo/"), {
+      method: "GET",
+      credentials: "include",
+      headers,
+      redirect: "manual",
+    });
+    if (!response.ok) {
+      return null;
+    }
+    const data = await response.json();
+    const normalized = data && typeof data === "object" ? data : null;
+    if (normalized) {
+      setUser(normalized);
+    }
+    return normalized;
+  } catch {
+    return null;
+  }
+}
+
 function base64UrlDecode(input: string): string {
   // base64url to base64
   const b64 = input.replace(/-/g, "+").replace(/_/g, "/");
@@ -210,9 +236,12 @@ export async function login(username: string, password: string): Promise<LoginRe
   if (data && data.access_token) {
     setAccessToken(data.access_token);
     if (data.refresh_token) setRefreshToken(data.refresh_token);
-    setUser(data.user);
+    if (data.user) {
+      setUser(data.user);
+    }
+    const profile = data.user ? data.user : await fetchCurrentUser();
     clearLogoutMarker();
-    dispatchAuthEvent({ status: "login", user: data.user ?? getUser() });
+    dispatchAuthEvent({ status: "login", user: profile ?? getUser() });
   }
   return data;
 }
@@ -236,7 +265,11 @@ export async function refresh(): Promise<string> {
   if (!data.access_token) throw new Error("NO_ACCESS_TOKEN");
   setAccessToken(data.access_token);
   if (data.refresh_token) setRefreshToken(data.refresh_token);
-  if (data.user) setUser(data.user);
+  if (data.user) {
+    setUser(data.user);
+  } else {
+    void fetchCurrentUser();
+  }
   clearLogoutMarker();
   return data.access_token;
 }
