@@ -25,6 +25,27 @@ REFRESH_COOKIE_NAME = "refresh_token"
 ACCESS_COOKIE_NAME = auth.ACCESS_COOKIE_NAME
 
 
+def _user_payload(user: models.User) -> dict:
+    return {
+        "username": getattr(user, "user_name", None),
+        "display_name": getattr(user, "display_name", getattr(user, "user_name", None)),
+        "user_type": getattr(user, "user_type", None),
+    }
+
+
+def _apply_no_cache_headers(response: Response) -> None:
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    vary_header = response.headers.get("Vary")
+    vary_tokens = [] if vary_header is None else [part.strip() for part in vary_header.split(",") if part.strip()]
+    for header_name in ("Authorization", "Cookie"):
+        if header_name not in vary_tokens:
+            vary_tokens.append(header_name)
+    if vary_tokens:
+        response.headers["Vary"] = ", ".join(vary_tokens)
+
+
 def _cookie_secure_default() -> bool:
     """Derive secure flag when not explicitly configured."""
     if settings.AUTH_COOKIE_SECURE is not None:
@@ -85,7 +106,12 @@ async def login_for_access_token(
     refresh_token = auth.create_refresh_token(user.user_name)
     _set_refresh_cookie(response, refresh_token)
     _set_access_cookie(response, access_token)
-    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user": _user_payload(user),
+    }
 
 
 @router.post("/api/token/refresh", response_model=auth.TokenPair)
@@ -193,9 +219,6 @@ async def read_users_me(current_user: models.User = Depends(auth.get_current_act
 
 # 兼容旧前端：提供 /api/userinfo/ 路由，返回当前用户基础信息
 @router.get("/api/userinfo/")
-def userinfo(current_user: models.User = Depends(auth.get_current_active_user)):
-    return {
-        "username": current_user.user_name,
-        "display_name": getattr(current_user, "display_name", current_user.user_name),
-        "user_type": getattr(current_user, "user_type", None),
-    }
+def userinfo(response: Response, current_user: models.User = Depends(auth.get_current_active_user)):
+    _apply_no_cache_headers(response)
+    return _user_payload(current_user)

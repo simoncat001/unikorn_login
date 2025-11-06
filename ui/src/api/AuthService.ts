@@ -4,12 +4,19 @@ import { resolveApiUrl } from "./config";
  * Stores access_token in sessionStorage + memory; refresh_token stays in HttpOnly cookie (set by server).
  */
 
+export type AuthUser = {
+  username?: string;
+  display_name?: string;
+  user_type?: string | null;
+  [key: string]: unknown;
+};
+
 type LoginResponse = {
   access_token: string;
   refresh_token?: string;
   token_type?: string;
   expires_in?: number;
-  user?: { id?: string; name?: string; roles?: string[]; permissions?: string[] };
+  user?: AuthUser | null;
 };
 
 const ACCESS_TOKEN_KEY = "access_token";
@@ -20,7 +27,7 @@ const LOGOUT_MARKER_KEY = "auth_force_relogin";
 
 type AuthChangeDetail = {
   status: "login" | "logout";
-  user?: any;
+  user?: AuthUser | null;
 };
 
 type AuthChangeListener = (detail: AuthChangeDetail) => void;
@@ -140,40 +147,44 @@ export function clearTokens() {
   dispatchAuthEvent({ status: "logout" });
 }
 
-function setUser(user: any | undefined) {
+function setUser(user: AuthUser | undefined) {
   try {
     if (user) sessionStorage.setItem(USER_KEY, JSON.stringify(user));
     else sessionStorage.removeItem(USER_KEY);
   } catch { }
 }
 
-function getUser(): any | null {
+function getUser(): AuthUser | null {
   try {
     const raw = sessionStorage.getItem(USER_KEY);
     if (!raw) return null;
-    return JSON.parse(raw);
+    return JSON.parse(raw) as AuthUser;
   } catch {
     return null;
   }
 }
 
-async function fetchCurrentUser(): Promise<any | null> {
+async function fetchCurrentUser(): Promise<AuthUser | null> {
   try {
     const headers: Record<string, string> = { Accept: "application/json" };
     if (accessToken) {
       headers["Authorization"] = `Bearer ${accessToken}`;
     }
+    headers["Cache-Control"] = "no-cache";
+    headers["Pragma"] = "no-cache";
     const response = await fetch(resolveApiUrl("/api/userinfo/"), {
       method: "GET",
       credentials: "include",
       headers,
       redirect: "manual",
+      cache: "no-store",
     });
     if (!response.ok) {
       return null;
     }
     const data = await response.json();
-    const normalized = data && typeof data === "object" ? data : null;
+    const normalized =
+      data && typeof data === "object" ? (data as AuthUser) : null;
     if (normalized) {
       setUser(normalized);
     }
@@ -236,10 +247,10 @@ export async function login(username: string, password: string): Promise<LoginRe
   if (data && data.access_token) {
     setAccessToken(data.access_token);
     if (data.refresh_token) setRefreshToken(data.refresh_token);
-    if (data.user) {
-      setUser(data.user);
-    }
     const profile = data.user ? data.user : await fetchCurrentUser();
+    if (profile) {
+      setUser(profile);
+    }
     clearLogoutMarker();
     dispatchAuthEvent({ status: "login", user: profile ?? getUser() });
   }

@@ -76,11 +76,22 @@ function buildRequestInit(
     redirect: "manual",
   };
 
+  if (!baseConfig.cache) {
+    baseConfig.cache = "no-store";
+  }
+
   if (!baseConfig.credentials) {
     baseConfig.credentials = "include";
   }
 
   const headers = createHeaders(baseConfig.headers);
+
+  const hasCacheControl = Object.keys(headers).some(
+    (key) => key.toLowerCase() === "cache-control"
+  );
+  if (!hasCacheControl) {
+    headers["Cache-Control"] = "no-cache";
+  }
 
   if (options?.isFormData !== true && method === "POST") {
     const hasContentType = Object.keys(headers).some(

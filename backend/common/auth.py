@@ -1,7 +1,7 @@
 import os
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Optional, List, Callable
+from typing import Optional, List, Callable, Dict, Any
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
@@ -41,11 +41,13 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     refresh_token: Optional[str] = None
+    user: Optional[Dict[str, Any]] = None
 
 class TokenPair(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    user: Optional[Dict[str, Any]] = None
 
 class TokenData(BaseModel):
     username: Optional[str] = None
