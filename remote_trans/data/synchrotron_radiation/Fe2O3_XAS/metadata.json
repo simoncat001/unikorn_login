@@ -1,0 +1,40 @@
+{
+  "experiment": {
+    "name": "Fe2O3 XAS 快速扫描",
+    "start_time": "2024-03-21T10:15:00+08:00",
+    "end_time": "2024-03-21T10:27:00+08:00",
+    "team": "材料束线团队",
+    "principal_investigator": "张伟",
+    "location": "上海光源 BL14W1",
+    "notes": "以Fe箔调零能量"
+  },
+  "beamline": {
+    "facility": "上海光源",
+    "beamline": "BL14W1",
+    "storage_ring_current_mA": 180.2,
+    "photon_energy_eV": 11500,
+    "monochromator": "Si(111)",
+    "exit_slit_um": 30
+  },
+  "detector": {
+    "name": "Ion Chamber",
+    "model": "I200",
+    "distance_mm": 450
+  },
+  "sample": {
+    "name": "Fe2O3 压片",
+    "environment": "空气",
+    "temperature_K": 300
+  },
+  "scan": {
+    "mode": "XAFS Transmission",
+    "points": 1201,
+    "dwell_time_s": 1.0,
+    "energy_range_eV": "11200-11800",
+    "comments": "覆盖K边 200 eV 前后"
+  },
+  "files": {
+    "primary": "sample_signal.dat",
+    "reference": "sample_reference.dat"
+  }
+}
