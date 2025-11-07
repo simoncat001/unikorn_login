@@ -280,12 +280,14 @@ def main() -> None:
 
     emi_file, dataset_files = detect_emi_file(args.input)
     metadata = parse_emi_metadata(emi_file)
+    print(metadata)
 
     with args.template.open("r", encoding="utf-8") as fh:
         template_data = json.load(fh)
 
     filled = populate_template(template_data, metadata, dataset_files)
     json_text = json.dumps(filled, ensure_ascii=False, indent=2 if args.pretty else None)
+            
 
     if args.output:
         args.output.write_text(json_text + ("\n" if args.pretty else ""), encoding="utf-8")
