@@ -1,14 +1,5 @@
 from __future__ import annotations
 
-<<<<<<< HEAD
-"""Lightweight FEI ``.emi`` reader used by :mod:`tem_metadata`.
-
-The implementation is intentionally small yet more structured than the
-ad-hoc regular-expression parsing that lived in ``tem_metadata.py``.
-It exposes a dedicated :class:`EmiFile` helper that understands how to
-extract the ``<ExperimentalDescription>`` block and query individual
-labels or scalar tags from an ``.emi`` container.
-=======
 """FEI ``.emi`` reader with optional HyperSpy + RosettaSciIO support.
 
 This module keeps the small helper API that :mod:`tem_metadata` relies on but
@@ -22,17 +13,10 @@ environments.
 
 .. _HyperSpy: https://hyperspy.org/
 .. _RosettaSciIO: https://hyperspy.org/rosettasciio
->>>>>>> 48f5bd59beb7b80c93cad432f723c86af3dee023
 """
 
 from dataclasses import dataclass
 from pathlib import Path
-<<<<<<< HEAD
-from typing import Dict, Iterable, Optional, Tuple
-import re
-import xml.etree.ElementTree as ET
-
-=======
 from typing import Dict, Iterable, Iterator, Optional, Tuple
 import re
 import xml.etree.ElementTree as ET
@@ -46,8 +30,6 @@ try:  # pragma: no cover - ensure plugin registration when available
     import rosettasciio  # type: ignore  # noqa: F401
 except Exception:  # pragma: no cover
     rosettasciio = None  # type: ignore
-
->>>>>>> 48f5bd59beb7b80c93cad432f723c86af3dee023
 
 @dataclass(frozen=True)
 class EmiLabel:
@@ -69,8 +51,6 @@ class EmiFile:
         self.path = Path(path)
         if not self.path.is_file():
             raise FileNotFoundError(self.path)
-<<<<<<< HEAD
-=======
         backend: Optional[_BaseBackend] = None
         if _hs_api is not None:  # pragma: no branch - simple optional path
             try:
@@ -132,52 +112,20 @@ class _TextBackend(_BaseBackend):
 
     def __init__(self, path: Path):
         super().__init__(path)
->>>>>>> 48f5bd59beb7b80c93cad432f723c86af3dee023
         self._data = self.path.read_bytes()
         self._text_cache: Optional[str] = None
         self._label_map: Optional[Dict[str, EmiLabel]] = None
 
     @property
     def text(self) -> str:
-<<<<<<< HEAD
-        """Decode the raw bytes once and cache the text representation."""
-
-=======
->>>>>>> 48f5bd59beb7b80c93cad432f723c86af3dee023
         if self._text_cache is None:
             self._text_cache = self._data.decode("latin-1", errors="ignore")
         return self._text_cache
 
-<<<<<<< HEAD
-    def _extract_block(self, tag: str) -> Optional[str]:
-        pattern = re.compile(rf"<{tag}>(.*?)</{tag}>", re.IGNORECASE | re.DOTALL)
-        match = pattern.search(self.text)
-        if not match:
-            return None
-        content = match.group(1)
-        return f"<{tag}>{content}</{tag}>"
-
-    def _experimental_description_element(self) -> Optional[ET.Element]:
-        block = self._extract_block("ExperimentalDescription")
-        if not block:
-            return None
-        try:
-            return ET.fromstring(block)
-        except ET.ParseError as exc:
-            raise EmiParseError(f"Failed to parse ExperimentalDescription in {self.path}") from exc
-
-    def labels(self) -> Iterable[EmiLabel]:
-        """Yield label entries from the experimental description."""
-
-        if self._label_map is None:
-            label_map: Dict[str, EmiLabel] = {}
-            element = self._experimental_description_element()
-=======
     def labels(self) -> Iterable[EmiLabel]:
         if self._label_map is None:
             label_map: Dict[str, EmiLabel] = {}
             element = _experimental_description_element(self.text, self.path)
->>>>>>> 48f5bd59beb7b80c93cad432f723c86af3dee023
             if element is not None:
                 for data_el in element.findall(".//Data"):
                     label = (data_el.findtext("Label") or "").strip()
@@ -188,23 +136,8 @@ class _TextBackend(_BaseBackend):
             self._label_map = label_map
         return self._label_map.values()
 
-<<<<<<< HEAD
-    def get_label(self, name: str) -> Tuple[str, str]:
-        """Return ``(value, unit)`` for the first label with the given name."""
-
-        for entry in self.labels():
-            if entry.label == name:
-                return entry.value, entry.unit
-        return "", ""
-
-    def find_text(self, tag: str) -> str:
-        """Return the text enclosed by ``<tag>`` in the file, if present."""
-
-        block = self._extract_block(tag)
-=======
     def find_text(self, tag: str) -> str:
         block = _extract_block(self.text, tag)
->>>>>>> 48f5bd59beb7b80c93cad432f723c86af3dee023
         if not block:
             return ""
         try:
@@ -214,12 +147,6 @@ class _TextBackend(_BaseBackend):
         text = element.text or ""
         return text.strip()
 
-<<<<<<< HEAD
-    def raw_text(self) -> str:
-        """Expose the decoded text for callers that need direct access."""
-
-        return self.text
-=======
 
 class _HyperSpyBackend(_BaseBackend):  # pragma: no cover - requires optional deps
     """Wrapper that extracts label/value pairs via HyperSpy + RosettaSciIO."""
@@ -351,5 +278,3 @@ def _experimental_description_element(text: str, path: Path) -> Optional[ET.Elem
         return ET.fromstring(block)
     except ET.ParseError as exc:
         raise EmiParseError(f"Failed to parse ExperimentalDescription in {path}") from exc
-
->>>>>>> 48f5bd59beb7b80c93cad432f723c86af3dee023
