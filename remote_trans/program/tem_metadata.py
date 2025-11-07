@@ -38,35 +38,13 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Tuple
 
+try:
+    from .fei_emi import EmiFile
+except ImportError:  # pragma: no cover - allows running as a script
+    from fei_emi import EmiFile
+
 HERE = Path(__file__).resolve().parent
 DEFAULT_TEMPLATE = HERE.parent / "templates" / "TEM" / "透射电子显微表征元数据规范-2025.json"
-
-_LABEL_VALUE_RE = re.compile(
-    r"<Label>(?P<label>[^<]+)</Label><Value>(?P<value>[^<]*)</Value>(?:<Unit>(?P<unit>[^<]*)</Unit>)?",
-    re.IGNORECASE,
-)
-
-
-def _find_tag_value(text: str, tag: str) -> str:
-    """Return the first value enclosed by ``<tag>...</tag>`` in ``text``."""
-
-    pattern = re.compile(rf"<{tag}>(.*?)</{tag}>", re.IGNORECASE | re.DOTALL)
-    match = pattern.search(text)
-    return match.group(1).strip() if match else ""
-
-
-def _extract_label_table(block: str) -> Dict[str, Tuple[str, str]]:
-    """Return mapping of label -> (value, unit) pairs from ``block``."""
-
-    table: Dict[str, Tuple[str, str]] = {}
-    for match in _LABEL_VALUE_RE.finditer(block):
-        label = match.group("label").strip()
-        value = (match.group("value") or "").strip()
-        unit = (match.group("unit") or "").strip()
-        if label not in table:
-            table[label] = (value, unit)
-    return table
-
 
 def _normalise_unit(unit: str) -> str:
     unit = unit.strip()
@@ -135,19 +113,10 @@ def _derive_scan_mode(mode: str) -> str:
 
 
 def parse_emi_metadata(emi_path: Path) -> Dict[str, object]:
-    text = emi_path.read_bytes().decode("latin-1", errors="ignore")
-
-    exp_desc_start = text.find("<ExperimentalDescription>")
-    exp_desc_end = text.find("</ExperimentalDescription>", exp_desc_start)
-    exp_desc_block = (
-        text[exp_desc_start:exp_desc_end]
-        if exp_desc_start != -1 and exp_desc_end != -1
-        else ""
-    )
-    label_table = _extract_label_table(exp_desc_block)
+    emi = EmiFile(emi_path)
 
     def label_entry(name: str) -> Tuple[str, str]:
-        return label_table.get(name, ("", ""))
+        return emi.get_label(name)
 
     microscope_name, _ = label_entry("Microscope")
     user_name, _ = label_entry("User")
@@ -159,7 +128,7 @@ def parse_emi_metadata(emi_path: Path) -> Dict[str, object]:
     c2_value, c2_unit = label_entry("C2 Aperture")
     c1_value, c1_unit = label_entry("C1 Aperture")
 
-    accelerating_voltage = _parse_float(_find_tag_value(text, "AcceleratingVoltage"))
+    accelerating_voltage = _parse_float(emi.find_text("AcceleratingVoltage"))
     if accelerating_voltage is None:
         high_tension_value, high_tension_unit = label_entry("High tension")
         hv = _parse_float(high_tension_value)
@@ -171,15 +140,15 @@ def parse_emi_metadata(emi_path: Path) -> Dict[str, object]:
 
     emission_current = _parse_float(emission_value)
     spot_size = _parse_float(spot_size_value)
-    dwell_time = _parse_float(_find_tag_value(text, "DwellTimePath"))
-    frame_time = _parse_float(_find_tag_value(text, "FrameTime"))
+    dwell_time = _parse_float(emi.find_text("DwellTimePath"))
+    frame_time = _parse_float(emi.find_text("FrameTime"))
     magnification_str = _format_value_with_unit(magnification_value, magnification_unit)
     camera_length_str = _format_value_with_unit(camera_length_value, camera_length_unit)
     c2_aperture = _format_value_with_unit(c2_value, c2_unit)
     c1_aperture = _format_value_with_unit(c1_value, c1_unit)
 
-    acquire_date = _parse_acquire_date(_find_tag_value(text, "AcquireDate"))
-    manufacturer = _find_tag_value(text, "Manufacturer")
+    acquire_date = _parse_acquire_date(emi.find_text("AcquireDate"))
+    manufacturer = emi.find_text("Manufacturer")
 
     metadata = {
         "microscope_name": microscope_name.strip(),
