@@ -4,10 +4,18 @@
 
 The script reads the TEM template JSON shipped with the repository and tries
 to populate the fields that can be inferred from the metadata stored in the
+<<<<<<< HEAD
 ``.emi`` file that accompanies the raw data.  The available metadata is mostly
 stored as XML fragments inside the ``.emi`` container.  We look for the useful
 blocks and parse them with regular expressions so that the script stays
 self-contained (no external dependencies are required).
+=======
+``.emi`` file that accompanies the raw data.  Whenever HyperSpy together with
+the RosettaSciIO plugin is available we use that specialised decoder to read
+the experimental description tables.  Otherwise we fall back to a small
+built-in parser that pulls the same information directly from the ``.emi``
+container so the CLI keeps working without optional dependencies.
+>>>>>>> 48f5bd59beb7b80c93cad432f723c86af3dee023
 
 Only a subset of the template fields can be filled from the information that is
 present in the demo data set.  For fields where there is no direct mapping we
@@ -280,14 +288,20 @@ def main() -> None:
 
     emi_file, dataset_files = detect_emi_file(args.input)
     metadata = parse_emi_metadata(emi_file)
+<<<<<<< HEAD
     print(metadata)
+=======
+>>>>>>> 48f5bd59beb7b80c93cad432f723c86af3dee023
 
     with args.template.open("r", encoding="utf-8") as fh:
         template_data = json.load(fh)
 
     filled = populate_template(template_data, metadata, dataset_files)
     json_text = json.dumps(filled, ensure_ascii=False, indent=2 if args.pretty else None)
+<<<<<<< HEAD
             
+=======
+>>>>>>> 48f5bd59beb7b80c93cad432f723c86af3dee023
 
     if args.output:
         args.output.write_text(json_text + ("\n" if args.pretty else ""), encoding="utf-8")
