@@ -4,214 +4,176 @@ import { resolveApiUrl } from "./config";
 
 type HttpMethod = "GET" | "POST" | "DELETE";
 
-type HeadersRecord = Record<string, string>;
+function createHeaders(source?: HeadersInit): Record<string, string> {
+    const headers: Record<string, string> = {};
 
-type ExecuteOptions = {
-  throwOnError: boolean;
-};
-
-type BuildRequestOptions = {
-  isFormData?: boolean;
-  body?: unknown;
-};
-
-function toHeadersRecord(source?: HeadersInit): HeadersRecord {
-  if (!source) {
-    return {};
-  }
-
-  if (typeof Headers !== "undefined" && source instanceof Headers) {
-    const headers: HeadersRecord = {};
-    source.forEach((value, key) => {
-      headers[key] = value;
-    });
-    return headers;
-  }
-
-  if (Array.isArray(source)) {
-    const headers: HeadersRecord = {};
-    for (const [key, value] of source) {
-      headers[key] = value;
+    if (!source) {
+        return headers;
     }
-    return headers;
-  }
 
-  return { ...(source as HeadersRecord) };
+    if (typeof Headers !== "undefined" && source instanceof Headers) {
+        source.forEach((value, key) => {
+            headers[key] = value;
+        });
+        return headers;
+    }
+
+    if (Array.isArray(source)) {
+        source.forEach(([key, value]) => {
+            headers[key] = value;
+        });
+        return headers;
+    }
+
+    return { ...source } as Record<string, string>;
 }
 
 async function executeWithAuth(
-  url: string,
-  init: RequestInit,
-  options: ExecuteOptions
+    url: string,
+    init: RequestInit,
+    { throwOnError }: { throwOnError: boolean }
 ): Promise<Response> {
-  let response = await fetch(url, init);
+    let response = await fetch(url, init);
 
-  if (!response.ok && response.status === 401) {
-    try {
-      const newToken = await refresh();
-      const headers = toHeadersRecord(init.headers);
-      headers["Authorization"] = `Bearer ${newToken}`;
-      init.headers = headers;
-      response = await fetch(url, init);
-    } catch (error) {
-      if (window.location.pathname !== LOGIN_PATH) {
-        redirectToLogin();
-      }
-      throw error;
+    if (!response.ok && response.status === 401) {
+        try {
+            const newToken = await refresh();
+            const headers = createHeaders(init.headers);
+            headers["Authorization"] = `Bearer ${newToken}`;
+            init.headers = headers;
+            response = await fetch(url, init);
+        } catch (error) {
+            if (window.location.pathname !== LOGIN_PATH) {
+                redirectToLogin();
+            }
+            throw error;
+        }
     }
-  }
 
-  if (!response.ok) {
-    const redirectedToLogin =
-      response.type === "opaqueredirect" &&
-      response.url &&
-      window.location.pathname !== LOGIN_PATH;
-
-    if (redirectedToLogin) {
-      redirectToLogin();
-    } else if (options.throwOnError) {
-      throw new Error(`${response.status} ${response.statusText}`);
+    if (!response.ok) {
+        if (
+            response.type === "opaqueredirect" &&
+            response.url &&
+            window.location.pathname !== LOGIN_PATH
+        ) {
+            redirectToLogin();
+        } else if (throwOnError) {
+            throw new Error(`${response.status} ${response.statusText}`);
+        }
     }
-  }
 
-  return response;
+    return response;
 }
 
 function buildRequestInit(
-  method: HttpMethod,
-  config?: RequestInit,
-  options: BuildRequestOptions = {}
+    method: HttpMethod,
+    config?: RequestInit,
+    options?: { isFormData?: boolean; body?: any }
 ): RequestInit {
-  const requestInit: RequestInit = {
-    ...config,
-    method,
-    redirect: "manual",
-    credentials: config?.credentials ?? "include",
-    cache: config?.cache ?? "no-store",
-  };
+    const baseConfig: RequestInit = {
+        ...config,
+        method,
+        redirect: "manual",
+    };
 
-  const headers = toHeadersRecord(requestInit.headers);
-
-  const hasCacheControl = Object.keys(headers).some(
-    (key) => key.toLowerCase() === "cache-control"
-  );
-
-  if (!hasCacheControl) {
-    headers["Cache-Control"] = "no-cache";
-  }
-
-  const token = getAccessToken();
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  if (method === "POST") {
-    const hasContentType = Object.keys(headers).some(
-      (key) => key.toLowerCase() === "content-type"
-    );
-
-    if (options.isFormData) {
-      if (!hasContentType) {
-        // Leave browser to set boundary headers automatically for FormData
-        delete headers["Content-Type"];
-      }
-      if (options.body !== undefined) {
-        requestInit.body = options.body as BodyInit;
-      }
-    } else {
-      if (!hasContentType) {
-        headers["Content-Type"] = "application/json";
-      }
-      if (options.body !== undefined) {
-        requestInit.body = JSON.stringify(options.body);
-      }
+    if (!baseConfig.credentials) {
+        baseConfig.credentials = "include";
     }
-  }
 
-  requestInit.headers = headers;
+    const headers = createHeaders(baseConfig.headers);
 
-  return requestInit;
+    if (options?.isFormData !== true && method === "POST") {
+        const hasContentType = Object.keys(headers).some(
+            (key) => key.toLowerCase() === "content-type"
+        );
+        if (!hasContentType) {
+            headers["Content-Type"] = "application/json";
+        }
+    }
+
+    const token = getAccessToken();
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    baseConfig.headers = headers;
+
+    if (method === "POST") {
+        if (options?.isFormData === true) {
+            if (options.body !== undefined) {
+                baseConfig.body = options.body;
+            }
+        } else if (options && options.body !== undefined) {
+            baseConfig.body = JSON.stringify(options.body);
+        }
+    }
+
+    return baseConfig;
 }
 
 async function apiProviderGet(url: string, config?: RequestInit): Promise<Response> {
-  const requestInit = buildRequestInit("GET", config);
-
-  try {
-    return await executeWithAuth(resolveApiUrl(url), requestInit, {
-      throwOnError: true,
-    });
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
+    try {
+        const requestInit = buildRequestInit("GET", config);
+        return await executeWithAuth(resolveApiUrl(url), requestInit, {
+            throwOnError: true,
+        });
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
 }
 
 async function apiProviderPost(
-  url: string,
-  postData?: unknown,
-  isFormData?: boolean,
-  config?: RequestInit
+    url: string,
+    postData?: any,
+    isFormData?: boolean,
+    config?: RequestInit
 ): Promise<Response> {
-  const requestInit = buildRequestInit(
-    "POST",
-    config,
-    {
-      isFormData,
-      body: postData,
+    try {
+        const requestInit = buildRequestInit("POST", config, {
+            isFormData,
+            body: postData,
+        });
+        return await executeWithAuth(resolveApiUrl(url), requestInit, {
+            throwOnError: false,
+        });
+    } catch (error) {
+        console.error(error);
+        throw error;
     }
-  );
-
-  try {
-    return await executeWithAuth(resolveApiUrl(url), requestInit, {
-      throwOnError: false,
-    });
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
 }
 
 async function apiProviderDelete(url: string, config?: RequestInit): Promise<Response> {
-  const requestInit = buildRequestInit("DELETE", config);
-
-  try {
-    return await executeWithAuth(resolveApiUrl(url), requestInit, {
-      throwOnError: false,
-    });
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
+    try {
+        const requestInit = buildRequestInit("DELETE", config);
+        return await executeWithAuth(resolveApiUrl(url), requestInit, {
+            throwOnError: false,
+        });
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
 }
 
-const ApiProvider = {
-  apiProviderGet,
-  apiProviderPost,
-  apiProviderDelete,
+const exportApiProvider = {
+    apiProviderGet,
+    apiProviderPost,
+    apiProviderDelete,
 };
 
 export default ApiProvider;
 export { apiProviderGet, apiProviderPost, apiProviderDelete };
 
 // 通用响应解包工具：后端统一 {status, data, ...extra}
-export interface ApiEnvelope<T = unknown> {
-  status: number;
-  data?: T;
-  [k: string]: unknown;
+export interface ApiEnvelope<T = any> {
+    status: number;
+    data?: T;
+    [k: string]: any;
 }
-
-export function unwrap<T = unknown>(raw: unknown): T {
-  if (raw && typeof raw === "object" && "status" in raw) {
-    const envelope = raw as ApiEnvelope<T> & { message?: string };
-
-    if (envelope.status !== 0) {
-      throw new Error(envelope.message ?? `api status ${envelope.status}`);
+export function unwrap<T = any>(raw: any): T {
+    if (raw && typeof raw === "object" && "status" in raw) {
+        if (raw.status !== 0) throw new Error(raw.message || `api status ${raw.status}`);
+        if ("data" in raw) return raw.data as T;
     }
-
-    if ("data" in envelope) {
-      return envelope.data as T;
-    }
-  }
-
-  return raw as T; // 兼容旧接口直接返回结构
+    return raw as T; // 兼容旧接口直接返回结构
 }
