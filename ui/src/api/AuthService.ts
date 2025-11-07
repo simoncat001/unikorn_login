@@ -4,21 +4,104 @@ import { resolveApiUrl } from "./config";
  * Stores access_token in sessionStorage + memory; refresh_token stays in HttpOnly cookie (set by server).
  */
 
+export type AuthUser = {
+  username?: string;
+  display_name?: string;
+  user_type?: string | null;
+  [key: string]: unknown;
+};
+
 type LoginResponse = {
   access_token: string;
   refresh_token?: string;
   token_type?: string;
   expires_in?: number;
-  user?: { id?: string; name?: string; roles?: string[]; permissions?: string[] };
+  user?: AuthUser | null;
 };
 
 const ACCESS_TOKEN_KEY = "access_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
 const USER_KEY = "auth_user";
+const AUTH_EVENT_NAME = "auth:change";
+const LOGOUT_MARKER_KEY = "auth_force_relogin";
+
+type AuthChangeDetail = {
+  status: "login" | "logout";
+  user?: AuthUser | null;
+};
+
+type AuthChangeListener = (detail: AuthChangeDetail) => void;
+
+function dispatchAuthEvent(detail: AuthChangeDetail) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const payload = detail;
+
+  try {
+    window.dispatchEvent(new CustomEvent<AuthChangeDetail>(AUTH_EVENT_NAME, { detail: payload }));
+    return;
+  } catch (error) {
+    // Older browsers (or jsdom) may not support the CustomEvent constructor; fall back.
+  }
+
+  try {
+    if (typeof document !== "undefined" && typeof document.createEvent === "function") {
+      const legacyEvent = document.createEvent("CustomEvent");
+      legacyEvent.initCustomEvent(AUTH_EVENT_NAME, false, false, payload);
+      window.dispatchEvent(legacyEvent);
+      return;
+    }
+  } catch {
+    // If even the legacy path fails, silently ignore. Consumers will rely on explicit refreshes.
+  }
+}
+
+export function subscribeAuthChange(listener: AuthChangeListener): () => void {
+  if (typeof window === "undefined") {
+    return () => undefined;
+  }
+
+  const handler = (event: Event) => {
+    const customEvent = event as CustomEvent<AuthChangeDetail>;
+    const detail = customEvent.detail;
+    if (!detail) {
+      return;
+    }
+    listener(detail);
+  };
+
+  window.addEventListener(AUTH_EVENT_NAME, handler as EventListener);
+
+  return () => {
+    window.removeEventListener(AUTH_EVENT_NAME, handler as EventListener);
+  };
+}
 
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
 let isLoggingOut = false;
+
+function markLogoutRequired() {
+  try {
+    sessionStorage.setItem(LOGOUT_MARKER_KEY, Date.now().toString());
+  } catch { }
+}
+
+function clearLogoutMarker() {
+  try {
+    sessionStorage.removeItem(LOGOUT_MARKER_KEY);
+  } catch { }
+}
+
+function hasLogoutMarker(): boolean {
+  try {
+    return sessionStorage.getItem(LOGOUT_MARKER_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
 
 function initFromStorage() {
   try {
@@ -35,6 +118,7 @@ function setAccessToken(token: string) {
   try {
     sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
   } catch { }
+  clearLogoutMarker();
 }
 
 function setRefreshToken(token: string | null) {
@@ -43,6 +127,9 @@ function setRefreshToken(token: string | null) {
     if (token) sessionStorage.setItem(REFRESH_TOKEN_KEY, token);
     else sessionStorage.removeItem(REFRESH_TOKEN_KEY);
   } catch { }
+  if (token) {
+    clearLogoutMarker();
+  }
 }
 
 function clearAccessToken() {
@@ -56,20 +143,52 @@ export function clearTokens() {
   clearAccessToken();
   setRefreshToken(null);
   setUser(undefined);
+  markLogoutRequired();
+  dispatchAuthEvent({ status: "logout" });
 }
 
-function setUser(user: any | undefined) {
+function setUser(user: AuthUser | undefined) {
   try {
     if (user) sessionStorage.setItem(USER_KEY, JSON.stringify(user));
     else sessionStorage.removeItem(USER_KEY);
   } catch { }
 }
 
-function getUser(): any | null {
+function getUser(): AuthUser | null {
   try {
     const raw = sessionStorage.getItem(USER_KEY);
     if (!raw) return null;
-    return JSON.parse(raw);
+    return JSON.parse(raw) as AuthUser;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchCurrentUser(): Promise<AuthUser | null> {
+  try {
+    const headers: Record<string, string> = { Accept: "application/json" };
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+    headers["Cache-Control"] = "no-cache";
+    headers["Pragma"] = "no-cache";
+    const response = await fetch(resolveApiUrl("/api/userinfo/"), {
+      method: "GET",
+      credentials: "include",
+      headers,
+      redirect: "manual",
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      return null;
+    }
+    const data = await response.json();
+    const normalized =
+      data && typeof data === "object" ? (data as AuthUser) : null;
+    if (normalized) {
+      setUser(normalized);
+    }
+    return normalized;
   } catch {
     return null;
   }
@@ -128,7 +247,12 @@ export async function login(username: string, password: string): Promise<LoginRe
   if (data && data.access_token) {
     setAccessToken(data.access_token);
     if (data.refresh_token) setRefreshToken(data.refresh_token);
-    setUser(data.user);
+    const profile = data.user ? data.user : await fetchCurrentUser();
+    if (profile) {
+      setUser(profile);
+    }
+    clearLogoutMarker();
+    dispatchAuthEvent({ status: "login", user: profile ?? getUser() });
   }
   return data;
 }
@@ -152,7 +276,12 @@ export async function refresh(): Promise<string> {
   if (!data.access_token) throw new Error("NO_ACCESS_TOKEN");
   setAccessToken(data.access_token);
   if (data.refresh_token) setRefreshToken(data.refresh_token);
-  if (data.user) setUser(data.user);
+  if (data.user) {
+    setUser(data.user);
+  } else {
+    void fetchCurrentUser();
+  }
+  clearLogoutMarker();
   return data.access_token;
 }
 
@@ -177,7 +306,14 @@ export function getAccessToken(): string | null {
 }
 
 export function isLoggedIn(): boolean {
+  if (hasLogoutMarker()) {
+    return false;
+  }
   return !isExpiredOrMissing(accessToken);
+}
+
+export function wasExplicitlyLoggedOut(): boolean {
+  return hasLogoutMarker();
 }
 
 export function redirectToLogin(next?: string) {
@@ -204,8 +340,10 @@ const AuthService = {
   clearTokens,
   getAccessToken,
   isLoggedIn,
+  wasExplicitlyLoggedOut,
   getUser,
   redirectToLogin,
+  subscribeAuthChange,
 };
 
 export default AuthService;
