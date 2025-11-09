@@ -31,6 +31,10 @@ try:  # pragma: no cover - ensure plugin registration when available
 except Exception:  # pragma: no cover
     rosettasciio = None  # type: ignore
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> dff02645d432c3a2140f6882b2831a1e8249aae8
 @dataclass(frozen=True)
 class EmiLabel:
     """Represents a ``<Data>`` entry in the experimental description."""
@@ -278,3 +282,7 @@ def _experimental_description_element(text: str, path: Path) -> Optional[ET.Elem
         return ET.fromstring(block)
     except ET.ParseError as exc:
         raise EmiParseError(f"Failed to parse ExperimentalDescription in {path}") from exc
+<<<<<<< HEAD
+=======
+
+>>>>>>> dff02645d432c3a2140f6882b2831a1e8249aae8
