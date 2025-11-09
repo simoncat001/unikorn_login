@@ -1,29 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-<<<<<<< HEAD
-"""Fill the synchrotron radiation template from structured metadata files.
-
-The demo data set in ``remote_trans/data/synchrotron_radiation`` ships a
-``metadata.json`` file that summarises the most relevant experiment
-parameters.  This command line helper loads that file (or a directory that
-contains it), combines the information with the synchrotron template stored
-under ``remote_trans/templates/synchrotron_radiation`` and outputs a filled
-JSON artefact.  The script mirrors the ergonomics of :mod:`tem_metadata` so it
-integrates nicely with the rest of the tooling in ``remote_trans/program``.
-=======
 """Populate the synchrotron radiation template from real-world data drops.
 
 The data delivered to :mod:`remote_trans` now consists of raw XAS/XES scan
 files, logbook excerpts and assorted metadata sheets.  Only some experiments
 ship a ready-to-consume ``metadata.json``/``.yaml`` file, while others rely on
 plain-text records such as ``scan_info.txt`` or notebook exports.  This helper
-ingests as much information as it can find in a dataset directory, maps the
+ingests as much information as it can find in a dataset directory—including
+the CIF headers embedded at the top of ``.cbf`` diffraction frames—maps the
 values onto the ``同步辐射表征元数据规范-2025.json`` template and prints a filled
 JSON structure.  When structured metadata files are present they take
 precedence; otherwise the script falls back to heuristics that recognise
 common key/value phrases (both English and Chinese) and timestamps extracted
 from logbooks.
->>>>>>> dff02645d432c3a2140f6882b2831a1e8249aae8
 
 Usage
 -----
@@ -31,15 +20,6 @@ Usage
 .. code-block:: bash
 
     python synchrotron_metadata.py \
-<<<<<<< HEAD
-        remote_trans/data/synchrotron_radiation/Fe2O3_XAS \
-        --pretty
-
-The command accepts either the path to ``metadata.json`` itself or the
-containing directory.  When pointed at a directory it will also list every file
-next to the metadata so that the template's “原始文件” block can be
-populated.
-=======
         remote_trans/data/synchrotron_radiation/<dataset_dir> \
         --pretty
 
@@ -47,7 +27,6 @@ The command accepts either the dataset directory or any file located inside the
 drop (for example ``metadata.json``).  When a file path is supplied the helper
 scans its parent directory to collect the remaining artefacts so that the
 template's “原始文件” section can be populated automatically.
->>>>>>> dff02645d432c3a2140f6882b2831a1e8249aae8
 """
 
 from __future__ import annotations
@@ -55,29 +34,18 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import json
-<<<<<<< HEAD
-from copy import deepcopy
-from pathlib import Path
-from typing import Dict, Iterable, Tuple
-=======
 import re
 import sys
 import unicodedata
 from copy import deepcopy
 from pathlib import Path
-from typing import Dict, Iterable, Iterator, List, MutableMapping, Tuple
->>>>>>> dff02645d432c3a2140f6882b2831a1e8249aae8
+from typing import Callable, Dict, Iterable, Iterator, List, MutableMapping, Tuple
 
 try:  # pragma: no cover - optional dependency
     import yaml  # type: ignore
 except Exception:  # pragma: no cover - PyYAML is optional
     yaml = None  # type: ignore
 
-<<<<<<< HEAD
-HERE = Path(__file__).resolve().parent
-DEFAULT_TEMPLATE = HERE.parent / "templates" / "synchrotron_radiation" / "同步辐射表征元数据规范-2025.json"
-DEFAULT_METADATA_NAMES = ("metadata.json", "metadata.yaml", "metadata.yml")
-=======
 try:  # pragma: no cover - optional dependency
     from openpyxl import load_workbook  # type: ignore
 except Exception:  # pragma: no cover - optional dependency
@@ -91,6 +59,7 @@ except Exception:  # pragma: no cover - optional dependency
 HERE = Path(__file__).resolve().parent
 DEFAULT_TEMPLATE = HERE.parent / "templates" / "synchrotron_radiation" / "同步辐射表征元数据规范-2025.json"
 STRUCTURED_SUFFIXES = {".json", ".yaml", ".yml"}
+CBF_SUFFIXES = {".cbf"}
 TEXTUAL_SUFFIXES = {
     ".txt",
     ".dat",
@@ -144,10 +113,19 @@ RAW_ALIASES: Dict[str, Tuple[str, str]] = {
     "束线": ("beamline", "beamline"),
     "束线号": ("beamline", "beamline"),
     "束线编号": ("beamline", "beamline"),
+    "_synchrotron_beamline": ("beamline", "beamline"),
+    "_synchrotron_beamline.name": ("beamline", "beamline"),
+    "_synchrotron_source.beamline": ("beamline", "beamline"),
+    "_diffrn_source.beamline": ("beamline", "beamline"),
     "facility": ("beamline", "facility"),
     "facility name": ("beamline", "facility"),
     "光源设施": ("beamline", "facility"),
     "光源设施名称": ("beamline", "facility"),
+    "_synchrotron_source": ("beamline", "facility"),
+    "_synchrotron_source.facility": ("beamline", "facility"),
+    "_synchrotron_source.description": ("beamline", "facility"),
+    "_diffrn_source.source": ("beamline", "facility"),
+    "_diffrn_source.target": ("beamline", "facility"),
     "photon energy": ("beamline", "photon_energy_eV"),
     "光子能量": ("beamline", "photon_energy_eV"),
     "光子能量(ev)": ("beamline", "photon_energy_eV"),
@@ -156,11 +134,18 @@ RAW_ALIASES: Dict[str, Tuple[str, str]] = {
     "光子能量(e v)": ("beamline", "photon_energy_eV"),
     "photon energy (ev)": ("beamline", "photon_energy_eV"),
     "beam energy": ("beamline", "photon_energy_eV"),
+    "wavelength": ("beamline", "photon_energy_eV"),
+    "wavelength (a)": ("beamline", "photon_energy_eV"),
+    "wavelength (angstrom)": ("beamline", "photon_energy_eV"),
     "incident energy": ("beamline", "photon_energy_eV"),
+    "_diffrn_source.energy": ("beamline", "photon_energy_eV"),
+    "_diffrn_radiation_wavelength": ("beamline", "photon_energy_eV"),
+    "_diffrn_radiation_wavelength.wavelength": ("beamline", "photon_energy_eV"),
     "storage ring current": ("beamline", "storage_ring_current_mA"),
     "储存环电流": ("beamline", "storage_ring_current_mA"),
     "储存环电流(mA)": ("beamline", "storage_ring_current_mA"),
     "ring current": ("beamline", "storage_ring_current_mA"),
+    "_diffrn_source.current": ("beamline", "storage_ring_current_mA"),
     "monochromator": ("beamline", "monochromator"),
     "mono name": ("beamline", "monochromator"),
     "单色器": ("beamline", "monochromator"),
@@ -173,24 +158,35 @@ RAW_ALIASES: Dict[str, Tuple[str, str]] = {
     "detector name": ("detector", "name"),
     "detector": ("detector", "name"),
     "探测器名称": ("detector", "name"),
+    "_diffrn_detector.detector": ("detector", "name"),
     "detector model": ("detector", "model"),
     "探测器型号": ("detector", "model"),
     "detector type": ("detector", "model"),
+    "_diffrn_detector.type": ("detector", "model"),
+    "_diffrn_detector.model": ("detector", "model"),
     "detector distance": ("detector", "distance_mm"),
+    "detector_distance": ("detector", "distance_mm"),
+    "detector-distance": ("detector", "distance_mm"),
     "detector distance (mm)": ("detector", "distance_mm"),
     "sample to detector distance": ("detector", "distance_mm"),
     "样品到探测器距离": ("detector", "distance_mm"),
     "样品到探测器距离(mm)": ("detector", "distance_mm"),
+    "_diffrn_detector.reference_distance": ("detector", "distance_mm"),
+    "_diffrn_detector.distance": ("detector", "distance_mm"),
     "sample name": ("sample", "name"),
     "样品名称": ("sample", "name"),
     "sample": ("sample", "name"),
     "样品代号": ("sample", "name"),
     "样品编号": ("sample", "name"),
+    "_sample.name": ("sample", "name"),
+    "_sample.id": ("sample", "name"),
     "sample environment": ("sample", "environment"),
     "样品环境": ("sample", "environment"),
     "样品描述": ("sample", "environment"),
     "样品状态": ("sample", "environment"),
     "environment": ("sample", "environment"),
+    "_sample.description": ("sample", "environment"),
+    "_sample.details": ("sample", "environment"),
     "temperature": ("sample", "temperature_K"),
     "样品温度": ("sample", "temperature_K"),
     "temperature (k)": ("sample", "temperature_K"),
@@ -200,6 +196,8 @@ RAW_ALIASES: Dict[str, Tuple[str, str]] = {
     "temperature /k": ("sample", "temperature_K"),
     "temperature / °c": ("sample", "temperature_K"),
     "环境温度": ("sample", "temperature_K"),
+    "_diffrn_measurement.sample_temperature": ("sample", "temperature_K"),
+    "_sample.temperature": ("sample", "temperature_K"),
     "scan mode": ("scan", "mode"),
     "扫描模式": ("scan", "mode"),
     "mode": ("scan", "mode"),
@@ -212,14 +210,21 @@ RAW_ALIASES: Dict[str, Tuple[str, str]] = {
     "能量点数": ("scan", "points"),
     "测点数": ("scan", "points"),
     "扫描步数": ("scan", "points"),
+    "_scan.points": ("scan", "points"),
+    "_diffrn_scan.points": ("scan", "points"),
     "dwell time": ("scan", "dwell_time_s"),
     "integration time": ("scan", "dwell_time_s"),
+    "exposure time": ("scan", "dwell_time_s"),
+    "count time": ("scan", "dwell_time_s"),
+    "collection time": ("scan", "dwell_time_s"),
     "单点积分时间": ("scan", "dwell_time_s"),
     "单点积分时间(s)": ("scan", "dwell_time_s"),
     "积分时间": ("scan", "dwell_time_s"),
     "积分时间(s)": ("scan", "dwell_time_s"),
     "曝光时间": ("scan", "dwell_time_s"),
     "测量时间": ("scan", "dwell_time_s"),
+    "_scan.integration_time": ("scan", "dwell_time_s"),
+    "_diffrn_scan.integration_time": ("scan", "dwell_time_s"),
     "energy range": ("scan", "energy_range_eV"),
     "energy range (ev)": ("scan", "energy_range_eV"),
     "扫描能区范围": ("scan", "energy_range_eV"),
@@ -234,6 +239,9 @@ RAW_ALIASES: Dict[str, Tuple[str, str]] = {
     "end energy": ("scan", "_energy_end_eV"),
     "end energy (ev)": ("scan", "_energy_end_eV"),
     "final energy": ("scan", "_energy_end_eV"),
+    "scan axis": ("scan", "mode"),
+    "scan_axis": ("scan", "mode"),
+    "scan-axis": ("scan", "mode"),
     "comments": ("scan", "comments"),
     "备注": ("scan", "comments"),
     "关联样品MGID": ("sample", "mgid_list"),
@@ -247,6 +255,11 @@ RAW_ALIASES: Dict[str, Tuple[str, str]] = {
     "表征原始数据列表": ("files", "listing"),
     "表征原始数据列表(相对路径)": ("files", "listing"),
     "data file list": ("files", "listing"),
+    "timestamp": ("experiment", "start_time"),
+    "start time stamp": ("experiment", "start_time"),
+    "start timestamp": ("experiment", "start_time"),
+    "recorded": ("experiment", "start_time"),
+    "title": ("experiment", "name"),
 }
 
 NUMERIC_FIELDS = {
@@ -264,7 +277,7 @@ DATETIME_FIELDS = {
     ("experiment", "end_time"),
 }
 
-DATA_PRIORITIES = (".dat", ".h5", ".hdf5", ".nxs", ".nx", ".csv", ".txt")
+DATA_PRIORITIES = (".cbf", ".dat", ".h5", ".hdf5", ".nxs", ".nx", ".csv", ".txt")
 
 TEMPLATE_FIELD_ALIASES = {
     "实验名称": ("experiment", "name"),
@@ -303,7 +316,6 @@ TEMPLATE_SECTION_FIELD_ALIASES = {
     ("原始文件", "表征原始数据列表"): ("files", "listing"),
     ("原始文件", "原始数据列表"): ("files", "listing"),
 }
->>>>>>> dff02645d432c3a2140f6882b2831a1e8249aae8
 
 
 def _parse_datetime(value: str) -> _dt.datetime | None:
@@ -314,27 +326,21 @@ def _parse_datetime(value: str) -> _dt.datetime | None:
         return _dt.datetime.fromisoformat(value)
     except ValueError:
         pass
-<<<<<<< HEAD
-=======
     try:
         date_only = _dt.date.fromisoformat(value)
     except ValueError:
         pass
     else:
         return _dt.datetime.combine(date_only, _dt.time())
->>>>>>> dff02645d432c3a2140f6882b2831a1e8249aae8
     for fmt in (
         "%Y-%m-%d %H:%M:%S",
         "%Y/%m/%d %H:%M:%S",
         "%Y-%m-%dT%H:%M:%S",
-<<<<<<< HEAD
-=======
         "%Y-%m-%d %H:%M",
         "%Y/%m/%d %H:%M",
         "%Y年%m月%d日 %H:%M:%S",
         "%Y年%m月%d日 %H:%M",
         "%Y年%m月%d日",
->>>>>>> dff02645d432c3a2140f6882b2831a1e8249aae8
     ):
         try:
             return _dt.datetime.strptime(value, fmt)
@@ -348,40 +354,6 @@ def _update(target: Dict[str, object], key: str, value: object) -> None:
         target[key] = value
 
 
-<<<<<<< HEAD
-def _load_metadata_dict(metadata_path: Path) -> Dict[str, object]:
-    text = metadata_path.read_text(encoding="utf-8")
-    if metadata_path.suffix.lower() == ".json":
-        return json.loads(text)
-    if metadata_path.suffix.lower() in {".yaml", ".yml"}:
-        if yaml is None:  # pragma: no cover - optional dependency path
-            raise RuntimeError(
-                f"Cannot parse {metadata_path.name}: install PyYAML to read YAML files"
-            )
-        data = yaml.safe_load(text)
-        if not isinstance(data, dict):
-            raise TypeError(f"Unexpected metadata structure in {metadata_path}")
-        return data
-    raise ValueError(f"Unsupported metadata format: {metadata_path.suffix}")
-
-
-def detect_metadata_file(input_path: Path) -> Tuple[Path, Iterable[Path]]:
-    if input_path.is_file():
-        return input_path, list(sorted(p for p in input_path.parent.iterdir() if p.is_file()))
-    if input_path.is_dir():
-        for name in DEFAULT_METADATA_NAMES:
-            candidate = input_path / name
-            if candidate.is_file():
-                files = list(sorted(p for p in input_path.iterdir() if p.is_file()))
-                return candidate, files
-        raise FileNotFoundError(
-            f"No metadata file found in {input_path}. Expected one of: {', '.join(DEFAULT_METADATA_NAMES)}"
-        )
-    raise FileNotFoundError(f"{input_path} does not exist")
-
-
-def populate_template(template: Dict[str, object], metadata: Dict[str, object], dataset_files: Iterable[Path]) -> Dict[str, object]:
-=======
 def _collect_dataset_files(input_path: Path) -> Tuple[Path, List[Path]]:
     if input_path.is_file():
         dataset_dir = input_path.parent
@@ -486,6 +458,166 @@ def _parse_numeric(value: str) -> float | int | None:
     if number.is_integer():
         return int(number)
     return number
+
+
+def _strip_cif_value(value: str) -> str:
+    value = value.strip()
+    if not value:
+        return value
+    if value.startswith("#"):
+        return ""
+    if "#" in value:
+        value = value.split("#", 1)[0].strip()
+    if value.startswith(";"):
+        return value.lstrip(";").strip()
+    if value[0] in {'"', "'"}:
+        quote = value[0]
+        if value.endswith(quote) and len(value) > 1:
+            value = value[1:-1]
+        else:
+            value = value[1:]
+    return value.strip()
+
+
+def _read_cbf_text_header(path: Path, *, chunk_size: int = 65_536) -> str:
+    marker = b"--CIF-BINARY-FORMAT-SECTION--"
+    buffer = bytearray()
+    with path.open("rb") as handle:
+        while True:
+            chunk = handle.read(chunk_size)
+            if not chunk:
+                break
+            buffer.extend(chunk)
+            if marker in buffer or b"\f" in chunk:
+                break
+    text = buffer.decode("latin-1", errors="ignore")
+    for sentinel in ("--CIF-BINARY-FORMAT-SECTION--", "\f", "\x1a"):
+        if sentinel in text:
+            text = text.split(sentinel, 1)[0]
+    return text
+
+
+def _split_cbf_comment(comment: str) -> Tuple[str | None, str | None]:
+    comment = comment.strip()
+    if not comment:
+        return None, None
+    for separator in (":", "=", "\t"):
+        if separator not in comment:
+            continue
+        if separator == ":" and ": " not in comment and " :" not in comment:
+            continue
+        key, value = comment.split(separator, 1)
+        return key.strip(), value.strip()
+    parts = re.split(r"\s{2,}", comment, maxsplit=1)
+    if len(parts) == 2:
+        return parts[0].strip(), parts[1].strip()
+    tokens = comment.split(None, 1)
+    if len(tokens) == 2:
+        return tokens[0].strip(), tokens[1].strip()
+    return comment.strip(), ""
+
+
+def _parse_cbf_header(path: Path) -> Dict[str, str]:
+    header = _read_cbf_text_header(path)
+    values: Dict[str, str] = {}
+    current_key: str | None = None
+    buffer: List[str] = []
+    collecting = False
+    for raw_line in header.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line.startswith("#"):
+            comment_key, comment_value = _split_cbf_comment(raw_line.lstrip("#"))
+            if comment_key:
+                cleaned = _strip_cif_value(comment_value)
+                if cleaned:
+                    values[comment_key] = cleaned
+            continue
+        if line.lower().startswith("loop_"):
+            if collecting and current_key:
+                text_value = "\n".join(buffer).strip()
+                if text_value and text_value not in {"?", "."}:
+                    values[current_key] = text_value
+            current_key = None
+            buffer = []
+            collecting = False
+            continue
+        if line.startswith("data_"):
+            continue
+        if line.startswith("_"):
+            if collecting and current_key:
+                text_value = "\n".join(buffer).strip()
+                if text_value and text_value not in {"?", "."}:
+                    values[current_key] = text_value
+            parts = line.split(None, 1)
+            current_key = parts[0]
+            buffer = []
+            if len(parts) == 1:
+                collecting = True
+                continue
+            value_part = _strip_cif_value(parts[1])
+            collecting = False
+            if value_part and value_part not in {"?", "."}:
+                values[current_key] = value_part
+            current_key = None
+            continue
+        if collecting and current_key:
+            if line == ";":
+                text_value = "\n".join(buffer).strip()
+                if text_value and text_value not in {"?", "."}:
+                    values[current_key] = text_value
+                current_key = None
+                buffer = []
+                collecting = False
+            else:
+                buffer.append(raw_line.rstrip())
+    if collecting and current_key:
+        text_value = "\n".join(buffer).strip()
+        if text_value and text_value not in {"?", "."}:
+            values[current_key] = text_value
+    return values
+
+
+def _cbf_energy_to_electron_volts(raw_value: str) -> str | None:
+    numeric = _parse_numeric(raw_value)
+    if numeric is None:
+        return None
+    value = float(numeric)
+    upper = raw_value.upper()
+    if "KEV" in upper or ("EV" not in upper and value < 100):
+        value *= 1_000.0
+    if value <= 0:
+        return None
+    if abs(value - round(value)) < 1e-6:
+        value = float(round(value))
+    return f"{int(value)} eV" if value.is_integer() else f"{value:.3f} eV"
+
+
+def _cbf_wavelength_to_energy(raw_value: str) -> str | None:
+    numeric = _parse_numeric(raw_value)
+    if numeric is None:
+        return None
+    wavelength = float(numeric)
+    if wavelength <= 0:
+        return None
+    # Assume Angstrom input (common for CBF headers)
+    energy = 12_398.419843320025 / wavelength
+    if abs(energy - round(energy)) < 1e-6:
+        energy = float(round(energy))
+    return f"{int(energy)} eV" if energy.is_integer() else f"{energy:.3f} eV"
+
+
+CBF_TRANSFORMS: Dict[str, Callable[[str], str | None]] = {
+    "_diffrn_source.energy": _cbf_energy_to_electron_volts,
+    "_diffrn_source.wavelength": _cbf_wavelength_to_energy,
+    "_diffrn_radiation_wavelength": _cbf_wavelength_to_energy,
+    "_diffrn_radiation_wavelength.wavelength": _cbf_wavelength_to_energy,
+    "_synchrotron_photon_wavelength": _cbf_wavelength_to_energy,
+    "wavelength": _cbf_wavelength_to_energy,
+    "wavelength (a)": _cbf_wavelength_to_energy,
+    "wavelength (angstrom)": _cbf_wavelength_to_energy,
+}
 
 
 def _coerce_value(section: str, key: str, value: str, *, original_key: str | None = None) -> object:
@@ -610,6 +742,55 @@ def _integrate_structured(metadata: MutableMapping[str, Dict[str, object]], data
                     target_section, target_key, str(sub_value), original_key=sub_key
                 )
                 _merge_into(metadata, target_section, target_key, coerced)
+
+
+def _handle_cbf_special(raw_key: str, value: str) -> List[Tuple[str, str, str]]:
+    normalized = _normalise_key(raw_key)
+    if normalized in {"energy range", "energy range ev"}:
+        numbers = re.findall(r"-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?", value)
+        if len(numbers) >= 2:
+            start = float(numbers[0])
+            end = float(numbers[1])
+            upper = value.upper()
+            if "KEV" in upper:
+                start *= 1_000.0
+                end *= 1_000.0
+            ordered = sorted((start, end))
+            start_str = f"{ordered[0]:g}"
+            end_str = f"{ordered[1]:g}"
+            range_str = f"{ordered[0]:g}-{ordered[1]:g}"
+            return [
+                ("scan", "_energy_start_eV", start_str),
+                ("scan", "_energy_end_eV", end_str),
+                ("scan", "energy_range_eV", range_str),
+            ]
+    return []
+
+
+def _integrate_cbf(metadata: MutableMapping[str, Dict[str, object]], path: Path) -> None:
+    header_values = _parse_cbf_header(path)
+    for raw_key, raw_value in header_values.items():
+        value = raw_value.strip()
+        if not value:
+            continue
+        special_entries = _handle_cbf_special(raw_key, value)
+        if special_entries:
+            for section, field, special_value in special_entries:
+                coerced = _coerce_value(section, field, special_value, original_key=raw_key)
+                _merge_into(metadata, section, field, coerced)
+            continue
+        transform = CBF_TRANSFORMS.get(raw_key.lower())
+        if transform:
+            transformed = transform(raw_value)
+            if not transformed:
+                continue
+            value = transformed
+        alias_key = _normalise_key(raw_key)
+        if alias_key not in ALIASES:
+            continue
+        section, field = ALIASES[alias_key]
+        coerced = _coerce_value(section, field, value, original_key=raw_key)
+        _merge_into(metadata, section, field, coerced)
 
 
 def _integrate_textual(metadata: MutableMapping[str, Dict[str, object]], path: Path) -> None:
@@ -849,7 +1030,15 @@ def _gather_metadata(dataset_dir: Path, dataset_files: Iterable[Path]) -> Dict[s
 
     for file_path in file_list:
         suffix = file_path.suffix.lower()
-        if suffix in TEXTUAL_SUFFIXES:
+        if suffix in CBF_SUFFIXES:
+            try:
+                _integrate_cbf(metadata, file_path)
+            except Exception as exc:
+                print(
+                    f"[synchrotron_metadata] skipped {file_path.name}: {exc}",
+                    file=sys.stderr,
+                )
+        elif suffix in TEXTUAL_SUFFIXES:
             if file_path.name.lower().startswith("logbook"):
                 _integrate_logbook(metadata, file_path)
             else:
@@ -955,7 +1144,6 @@ def populate_template(
     dataset_dir: Path,
     dataset_files: Iterable[Path],
 ) -> Dict[str, object]:
->>>>>>> dff02645d432c3a2140f6882b2831a1e8249aae8
     filled = deepcopy(template)
 
     experiment = metadata.get("experiment", {}) if isinstance(metadata.get("experiment"), dict) else {}
@@ -970,8 +1158,6 @@ def populate_template(
     _update(filled, "实验团队", experiment.get("team", ""))
     _update(filled, "实验地点", experiment.get("location", ""))
 
-<<<<<<< HEAD
-=======
     mgid_custom = experiment.get("mgid_custom")
     if isinstance(mgid_custom, str):
         filled["MGID自定义部分"] = mgid_custom.strip()
@@ -980,7 +1166,6 @@ def populate_template(
     else:
         filled["MGID自定义部分"] = str(filled.get("MGID自定义部分", "")).strip()
 
->>>>>>> dff02645d432c3a2140f6882b2831a1e8249aae8
     start_time = _parse_datetime(str(experiment.get("start_time", ""))) if experiment else None
     if start_time is not None:
         _update(filled, "实验日期", start_time.date().isoformat())
@@ -1016,8 +1201,6 @@ def populate_template(
         sample_section["样品温度(K)"] = sample.get("temperature_K")
     filled["样品信息"] = sample_section
 
-<<<<<<< HEAD
-=======
     sample_mgids = sample.get("mgid_list")
     mgid_values: List[str] = []
     if isinstance(sample_mgids, str):
@@ -1029,7 +1212,6 @@ def populate_template(
                 mgid_values.append(text)
     filled["关联样品MGID"] = mgid_values
 
->>>>>>> dff02645d432c3a2140f6882b2831a1e8249aae8
     scan_section = dict(filled.get("扫描参数", {}))
     _update(scan_section, "扫描模式", scan.get("mode", ""))
     if scan.get("points") is not None:
@@ -1047,11 +1229,6 @@ def populate_template(
     paths = sorted(Path(p) for p in dataset_files)
     original_files = dict(filled.get("原始文件", {}))
     if paths:
-<<<<<<< HEAD
-        primary = files.get("primary") or next((p.name for p in paths if p.name == "metadata.json"), paths[0].name)
-        original_files["表征原始数据文件"] = primary
-        original_files["表征原始数据列表"] = "\n".join(p.name for p in paths)
-=======
         primary = files.get("primary") if isinstance(files, dict) else None
         if not primary:
             primary = _choose_primary_file(dataset_dir, paths)
@@ -1069,7 +1246,6 @@ def populate_template(
                     rel = p
                 rel_lines.append(str(rel))
             original_files["表征原始数据列表"] = "\n".join(rel_lines)
->>>>>>> dff02645d432c3a2140f6882b2831a1e8249aae8
     filled["原始文件"] = original_files
 
     return filled
@@ -1100,25 +1276,16 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-<<<<<<< HEAD
-    metadata_file, dataset_files = detect_metadata_file(args.input)
-    metadata = _load_metadata_dict(metadata_file)
-=======
     dataset_dir, dataset_files = _collect_dataset_files(args.input)
     if args.output:
         output_path = args.output.resolve()
         dataset_files = [p for p in dataset_files if p.resolve() != output_path]
     metadata = _gather_metadata(dataset_dir, dataset_files)
->>>>>>> dff02645d432c3a2140f6882b2831a1e8249aae8
 
     with args.template.open("r", encoding="utf-8") as fh:
         template_data = json.load(fh)
 
-<<<<<<< HEAD
-    filled = populate_template(template_data, metadata, dataset_files)
-=======
     filled = populate_template(template_data, metadata, dataset_dir, dataset_files)
->>>>>>> dff02645d432c3a2140f6882b2831a1e8249aae8
     json_text = json.dumps(filled, ensure_ascii=False, indent=2 if args.pretty else None)
 
     if args.output:
