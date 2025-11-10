@@ -27,7 +27,7 @@ const LOGOUT_MARKER_KEY = "auth_force_relogin";
 
 type AuthChangeDetail = {
   status: "login" | "logout";
-  user?: AuthUser | null;
+  user?: any;
 };
 
 type AuthChangeListener = (detail: AuthChangeDetail) => void;
@@ -247,12 +247,9 @@ export async function login(username: string, password: string): Promise<LoginRe
   if (data && data.access_token) {
     setAccessToken(data.access_token);
     if (data.refresh_token) setRefreshToken(data.refresh_token);
-    const profile = data.user ? data.user : await fetchCurrentUser();
-    if (profile) {
-      setUser(profile);
-    }
+    setUser(data.user);
     clearLogoutMarker();
-    dispatchAuthEvent({ status: "login", user: profile ?? getUser() });
+    dispatchAuthEvent({ status: "login", user: data.user ?? getUser() });
   }
   return data;
 }
@@ -276,11 +273,7 @@ export async function refresh(): Promise<string> {
   if (!data.access_token) throw new Error("NO_ACCESS_TOKEN");
   setAccessToken(data.access_token);
   if (data.refresh_token) setRefreshToken(data.refresh_token);
-  if (data.user) {
-    setUser(data.user);
-  } else {
-    void fetchCurrentUser();
-  }
+  if (data.user) setUser(data.user);
   clearLogoutMarker();
   return data.access_token;
 }
