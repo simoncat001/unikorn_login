@@ -1,5 +1,5 @@
 import { JSONSchema7 } from "json-schema";
-import ApiProvider from "./ApiProvider";
+import ApiProvider, { unwrap } from "./ApiProvider";
 export type LayeredWordOrder = {
   type: string;
   title: string;
@@ -157,11 +157,15 @@ const createTemplate: (
 
 const getTemplate: (id: string) => Promise<Template> = async (id) => {
   try {
-    let response = await ApiProvider.apiProviderGet(
+    const response = await ApiProvider.apiProviderGet(
       "/api/templates/".concat(id)
     );
-    const TemplateObject: Template = (await response.json()) as Template;
-    return TemplateObject;
+    const payload = await response.json();
+    const template = unwrap<Template>(payload);
+    if (!template || typeof template !== "object") {
+      throw new Error("template payload missing");
+    }
+    return template;
   } catch (e) {
     console.error(e);
     throw e;
