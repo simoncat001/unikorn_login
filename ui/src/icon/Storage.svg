@@ -1,0 +1,42 @@
+<svg viewBox="0 0 256 256" height="256" width="256" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <defs>
+        <style>.cls-1{isolation:isolate;}.cls-2{fill:url(#未命名的渐变_395);}.cls-3{fill:url(#未命名的渐变_396);}.cls-4{fill:url(#未命名的渐变_397);}.cls-5{fill:url(#未命名的渐变_398);}.cls-6{fill:url(#未命名的渐变_399);}.cls-7{opacity:0.1;}.cls-8,.cls-9{mix-blend-mode:screen;}.cls-8{fill:url(#未命名的渐变_141);}.cls-9{fill:url(#未命名的渐变_141-2);}</style>
+        <linearGradient id="未命名的渐变_395" y2="-593.61" gradientUnits="userSpaceOnUse" gradientTransform="matrix(17.78, 0, 0, -17.78, 1417.32, -10394.59)" x1="-75.15" y1="-593.61" x2="-69.98">
+            <stop stop-color="#3b87ff" offset="0"/>
+            <stop stop-color="#2e67ff" offset="1"/>
+        </linearGradient>
+        <linearGradient id="未命名的渐变_396" y2="-609.94" gradientUnits="userSpaceOnUse" gradientTransform="matrix(11.19, 0, 0, -11.19, 1420.61, -6701.62)" x1="-118.1" y1="-609.94" x2="-112.93">
+            <stop stop-color="#e1dbff" offset="0"/>
+            <stop stop-color="#fff" offset="1"/>
+        </linearGradient>
+        <linearGradient id="未命名的渐变_397" y2="-611.97" gradientUnits="userSpaceOnUse" gradientTransform="matrix(11.19, 0, 0, -11.19, 1420.61, -6696.18)" x1="-118.1" y1="-611.97" x2="-112.93">
+            <stop stop-color="#f1d669" offset="0"/>
+            <stop stop-color="#f3bd9c" offset="1"/>
+        </linearGradient>
+        <linearGradient id="未命名的渐变_398" y2="-614" gradientUnits="userSpaceOnUse" gradientTransform="matrix(11.19, 0, 0, -11.19, 1420.61, -6690.73)" x1="-118.1" y1="-614" x2="-112.93">
+            <stop stop-color="#cfedff" offset="0"/>
+            <stop stop-color="#fff" offset="1"/>
+        </linearGradient>
+        <linearGradient id="未命名的渐变_399" y2="-575.91" gradientUnits="userSpaceOnUse" gradientTransform="matrix(37.81, 0, 0, -37.81, 1407.4, -21666.06)" x1="-36.42" y1="-575.91" x2="-31.25">
+            <stop stop-color="#3b87ff" offset="0"/>
+            <stop stop-color="#57c1ff" offset="1"/>
+        </linearGradient>
+        <linearGradient id="未命名的渐变_141" y2="91.86" gradientTransform="matrix(1, 0, 0, 1, 0, 0)" x1="150.77" y1="91.86" x2="224.87" xlink:href="#未命名的渐变_399"/>
+        <linearGradient id="未命名的渐变_141-2" y2="164.88" gradientTransform="matrix(1, 0, 0, 1, 0, 0)" x1="30.22" y1="164.88" x2="120.9" xlink:href="#未命名的渐变_399"/>
+    </defs>
+    <g transform="matrix(1.3092249,0,0,1.3092249,-39.615758,-39.582159)">
+        <g class="cls-1">
+            <g id="图标">
+                <path class="cls-2" d="M173.46,180.36v-46.7a29.32,29.32,0,0,0-29.32-29.32H110.86a29.33,29.33,0,0,0-29.33,29.32v46.7a29.32,29.32,0,0,0,29.33,29.31h33.28A29.31,29.31,0,0,0,173.46,180.36Z"/>
+                <path class="cls-3" d="M103.73,131.31h47.55a5.18,5.18,0,0,0,0-10.35H103.73a5.18,5.18,0,1,0,0,10.35"/>
+                <path class="cls-4" d="M103.73,159.47h47.55a5.17,5.17,0,0,0,0-10.34H103.73a5.17,5.17,0,1,0,0,10.34"/>
+                <path class="cls-5" d="M103.73,187.64h47.55a5.17,5.17,0,0,0,0-10.34H103.73a5.17,5.17,0,1,0,0,10.34"/>
+                <path class="cls-6" d="M201.85,100.53a27.78,27.78,0,0,0,.54-5.43,27.45,27.45,0,0,0-27.45-27.45c-.93,0-1.85,0-2.76.14A59.4,59.4,0,0,0,67.65,97.45a39.44,39.44,0,0,0,2,78.82H81.53V133.66a29.33,29.33,0,0,1,29.33-29.32h33.28a29.32,29.32,0,0,1,29.32,29.32v42.61h12.86a39.46,39.46,0,0,0,15.53-75.74Z"/>
+                <g class="cls-7">
+                    <path class="cls-8" d="M224.87,128.85a39.47,39.47,0,0,0-23-28.32,27,27,0,0,0,.54-5.43,27.44,27.44,0,0,0-27.44-27.45c-.93,0-1.85,0-2.76.14A59.73,59.73,0,0,0,153.68,53a59.29,59.29,0,0,0,71.19,75.87Z"/>
+                    <path class="cls-9" d="M83.17,124.23a30.28,30.28,0,0,0-1,3.52,30.28,30.28,0,0,1,1-3.52,59,59,0,0,0-52,4.24,39.38,39.38,0,0,0,38.55,47.8H81.53v4.09a29.33,29.33,0,0,0,29.33,29.32h1.77a59.31,59.31,0,0,0-29.46-85.45Z"/>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

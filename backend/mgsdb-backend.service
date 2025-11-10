@@ -1,0 +1,26 @@
+[Unit]
+Description=MGSDB Backend Service
+After=network.target
+Requires=postgresql.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/d/Data/Code/MGSDB_1017/backend
+Environment="PATH=/d/Data/Code/MGSDB_1017/backend/venv/bin"
+Environment="DB_USER=unikorn"  
+Environment="DB_PASSWORD=123456"
+Environment="DB_HOST=127.0.0.1"
+Environment="DB_PORT=5432"
+Environment="DB_NAME=unikorn"
+Environment="SECRET_KEY=your-secret-key-here"
+Environment="CORS_ORIGINS=*"
+ExecStart=python -m uvicorn main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=mgsdb-backend
+
+[Install]
+WantedBy=multi-user.target
