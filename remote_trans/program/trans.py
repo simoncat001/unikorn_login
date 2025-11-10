@@ -62,9 +62,14 @@ TEXT_EXTS = {".csv", ".tsv", ".txt", ".dat", ".log", ""}  # "" -> 无扩展名�
 EXCEL_EXTS = {".xlsx", ".xls"}
 TARGET_REGISTER = "register.txt"
 
-# 模板路径（脚本同目录 template.json）
+# 模板路径（切换为《高通量纳米压痕表征元数据规范-2025 (3).json》）
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-TEMPLATE_JSON_PATH = os.path.join(SCRIPT_DIR, "template.json")
+TEMPLATE_JSON_PATH = os.path.join(
+    os.path.dirname(SCRIPT_DIR),
+    "templates",
+    "nanoindenter",
+    "高通量纳米压痕表征元数据规范-2025 (3).json",
+)
 
 # ===================== 通用工具 =====================
 def try_decode(b: bytes) -> str:
@@ -632,7 +637,7 @@ class FirstLevelDirHandler(FileSystemEventHandler):
 # ===================== 入口 =====================
 def main():
     ap = argparse.ArgumentParser(
-        description="Watch new subdirs; parse, zip, upload; load template.json; submit JSON with authenticated requests.")
+        description="Watch new subdirs; parse, zip, upload; load 高通量纳米压痕表征元数据规范-2025 (3).json; submit JSON with authenticated requests.")
     ap.add_argument("--root", required=True, help="Root folder to watch (first-level subdirs).")
     ap.add_argument("--quiet-secs", type=int, default=QUIET_SECS, help="Seconds of no changes to treat subdir as stable.")
     ap.add_argument("--poll-interval", type=int, default=POLL_INTERVAL, help="Polling interval while checking stability.")
@@ -659,7 +664,10 @@ def main():
         sys.exit(1)
 
     if not os.path.isfile(TEMPLATE_JSON_PATH):
-        print(f"[ERROR] template.json not found next to script: {TEMPLATE_JSON_PATH}", file=sys.stderr)
+        print(
+            f"[ERROR] 模板文件不存在: {TEMPLATE_JSON_PATH}",
+            file=sys.stderr,
+        )
         sys.exit(2)
 
     username = args.username or os.environ.get("UPLOAD_USERNAME")
