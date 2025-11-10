@@ -6,7 +6,8 @@
 调整说明：
 1) 使用用户名 / 密码调用 ``/api/token`` 获取访问令牌；
 2) 分片上传与 ``web_submit`` 请求都会携带 ``Authorization`` 头；
-3) 移除旧版 Keycloak/unicorn_user 自定义头逻辑，统一走后端登录。
+3) 移除旧版 Keycloak/unicorn_user 自定义头逻辑，统一走后端登录；
+4) 新增 ``--env`` 参数并默认指向 dev（https://test.mgsdb.sjtu.edu.cn/），便于同步最新环境配置。
 """
 
 import os, re, io, csv, sys, time, json, argparse, math, requests, zipfile, threading
@@ -27,7 +28,16 @@ from watchdog.events import FileSystemEventHandler, FileSystemEvent
 from backend_client import BackendUploadClient
 
 # ===================== 基本配置 =====================
-DEFAULT_BASE_URL = "http://127.0.0.1:8000/"
+ENV_BASE_URLS = {
+    # 开发环境：外网可访问的测试站点
+    "dev": "https://test.mgsdb.sjtu.edu.cn/",
+    # 生产环境：正式域名
+    "prod": "https://mgsdb.sjtu.edu.cn/",
+    # 本地调试：FastAPI 本地启动时
+    "local": "http://127.0.0.1:8000/",
+}
+DEFAULT_ENV = "dev"
+DEFAULT_BASE_URL = ENV_BASE_URLS[DEFAULT_ENV]
 OBJECT_PREFIX = "devdata"  # MinIO 对象前缀
 PART_SIZE = 16 * 1024 * 1024
 CONCURRENCY = 8
@@ -626,7 +636,17 @@ def main():
     ap.add_argument("--root", required=True, help="Root folder to watch (first-level subdirs).")
     ap.add_argument("--quiet-secs", type=int, default=QUIET_SECS, help="Seconds of no changes to treat subdir as stable.")
     ap.add_argument("--poll-interval", type=int, default=POLL_INTERVAL, help="Polling interval while checking stability.")
-    ap.add_argument("--base-url", default=DEFAULT_BASE_URL, help="Backend base URL, e.g. http://127.0.0.1:8000/")
+    ap.add_argument(
+        "--env",
+        choices=sorted(ENV_BASE_URLS.keys()),
+        default=DEFAULT_ENV,
+        help="快捷设置后端环境，默认 dev (https://test.mgsdb.sjtu.edu.cn/)。指定 --base-url 时忽略。",
+    )
+    ap.add_argument(
+        "--base-url",
+        default=None,
+        help="Backend base URL. 若未指定则根据 --env 选择预设地址。",
+    )
     ap.add_argument("--username", help="Backend login username (or set UPLOAD_USERNAME env variable).")
     ap.add_argument("--password", help="Backend login password (or set UPLOAD_PASSWORD env variable).")
     ap.add_argument("--template-id", default=DEFAULT_TEMPLATE_ID, help="Template ID for web_submit payload.")
@@ -648,7 +668,13 @@ def main():
         print("[ERROR] --username/--password or UPLOAD_USERNAME/UPLOAD_PASSWORD env vars must be provided", file=sys.stderr)
         sys.exit(3)
 
-    base_url = args.base_url.rstrip("/") + "/"
+    if args.base_url:
+        base_url = args.base_url
+        resolved_env = None
+    else:
+        base_url = ENV_BASE_URLS[args.env]
+        resolved_env = args.env
+    base_url = base_url.rstrip("/") + "/"
     client = BackendUploadClient(base_url)
     try:
         client.login(username, password)
@@ -670,7 +696,16 @@ def main():
     obs = Observer()
     obs.schedule(handler, root, recursive=False)
     obs.start()
-    print(f"[WATCHING] {root} (quiet={args.quiet_secs}s, poll={args.poll_interval}s) -> {base_url}")
+    if resolved_env:
+        print(
+            f"[WATCHING] {root} (quiet={args.quiet_secs}s, poll={args.poll_interval}s)"
+            f" -> {base_url} [env={resolved_env}]"
+        )
+    else:
+        print(
+            f"[WATCHING] {root} (quiet={args.quiet_secs}s, poll={args.poll_interval}s)"
+            f" -> {base_url}"
+        )
     try:
         while True:
             time.sleep(1)
