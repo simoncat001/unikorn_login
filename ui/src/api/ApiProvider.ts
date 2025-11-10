@@ -161,7 +161,8 @@ const exportApiProvider = {
     apiProviderDelete,
 };
 
-export default exportApiProvider;
+export default ApiProvider;
+export { apiProviderGet, apiProviderPost, apiProviderDelete };
 
 // 通用响应解包工具：后端统一 {status, data, ...extra}
 export interface ApiEnvelope<T = any> {
