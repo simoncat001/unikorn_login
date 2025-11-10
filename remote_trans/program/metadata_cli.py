@@ -95,6 +95,22 @@ def _xrf_runner(
     )
 
 
+def _xrd_default_template() -> Path:
+    module = _load_module("xrd_metadata")
+    return module._resolve_template(None)  # type: ignore[attr-defined]
+
+
+def _xrd_runner(
+    input_path: Path, template: Optional[Path], output_path: Optional[Path]
+) -> Dict[str, object]:
+    module = _load_module("xrd_metadata")
+    return module.generate_metadata(
+        input_path,
+        template_path=template,
+        output_path=output_path,
+    )
+
+
 EXTRACTORS: Dict[str, Extractor] = {
     "tem": Extractor(
         key="tem",
@@ -120,6 +136,12 @@ EXTRACTORS: Dict[str, Extractor] = {
         default_template=_xrf_default_template,
         runner=_xrf_runner,
     ),
+    "xrd": Extractor(
+        key="xrd",
+        description="High-throughput XRD scans (.xrdml/.xy/.gfrm)",
+        default_template=_xrd_default_template,
+        runner=_xrd_runner,
+    ),
 }
 
 
@@ -132,6 +154,8 @@ def _detect_type(target: Path) -> Optional[str]:
             return "tem"
         if suffix == ".cbf":
             return None
+        if suffix in {".xrdml", ".xy", ".uxd", ".rd", ".raw", ".gfrm"}:
+            return "xrd"
     else:
         emi = next(target.rglob("*.emi"), None)
         if emi is not None:
@@ -139,6 +163,10 @@ def _detect_type(target: Path) -> Optional[str]:
         cbf = next(target.rglob("*.cbf"), None)
         if cbf is not None:
             return None
+        for pattern in ("*.xrdml", "*.xy", "*.uxd", "*.rd", "*.raw", "*.gfrm"):
+            xrd_file = next(target.rglob(pattern), None)
+            if xrd_file is not None:
+                return "xrd"
     return None
 
 
