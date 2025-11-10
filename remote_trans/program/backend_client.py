@@ -34,6 +34,18 @@ class BackendUploadClient:
         self._session = requests.Session()
         self._access_token: Optional[str] = None
 
+    @property
+    def session(self) -> requests.Session:
+        """Return the underlying :class:`requests.Session` instance."""
+
+        return self._session
+
+    @property
+    def base_url(self) -> str:
+        """Return the normalised service base URL."""
+
+        return self._base_url
+
     # ------------------------------------------------------------------
     def _join(self, path: str) -> str:
         path = path.lstrip("/")
@@ -43,6 +55,11 @@ class BackendUploadClient:
         if not self._access_token:
             raise RuntimeError("login must be called before making authenticated requests")
         return {"Authorization": f"Bearer {self._access_token}"}
+
+    def auth_headers(self) -> Dict[str, str]:
+        """Return a copy of the current ``Authorization`` header mapping."""
+
+        return dict(self._headers())
 
     # ------------------------------------------------------------------
     def login(self, username: str, password: str) -> Dict[str, str]:

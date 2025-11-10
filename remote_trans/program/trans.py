@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-改动要点（按你的要求）：
-1) 所有后端请求都走本地 HTTP，不再使用 HTTPS。
-2) 取消 Keycloak 鉴权，不再携带 Authorization 头。
-3) 提交到后端接口时，带上用户信息：kevin（通过自定义头 unicorn_user）。
+监控指定目录，解析纳米压痕测试数据并在登录后自动上传。
 
-如需改成别的自定义头名，把 UNICORN_USER_HEADER 改一下即可。
+调整说明：
+1) 使用用户名 / 密码调用 ``/api/token`` 获取访问令牌；
+2) 分片上传与 ``web_submit`` 请求都会携带 ``Authorization`` 头；
+3) 移除旧版 Keycloak/unicorn_user 自定义头逻辑，统一走后端登录；
+4) 新增 ``--env`` 参数并默认指向 dev（https://test.mgsdb.sjtu.edu.cn/），便于同步最新环境配置。
 """
 
 import os, re, io, csv, sys, time, json, argparse, math, requests, zipfile, threading
+from dataclasses import dataclass
+from urllib.parse import urljoin
 
 os.environ.pop('HTTP_PROXY', None)
 os.environ.pop('HTTPS_PROXY', None)
@@ -22,25 +25,37 @@ import pandas as pd
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileSystemEvent
 
-# ===================== 基本配置（已改为本地 HTTP & 无鉴权） =====================
-API_BASE = "http://127.0.0.1:8000/api/development_data/part_upload"  # MinIO 预签名相关后端接口
+from backend_client import BackendUploadClient
+
+# ===================== 基本配置 =====================
+ENV_BASE_URLS = {
+    # 开发环境：外网可访问的测试站点
+    "dev": "https://test.mgsdb.sjtu.edu.cn/",
+    # 生产环境：正式域名
+    "prod": "https://mgsdb.sjtu.edu.cn/",
+    # 本地调试：FastAPI 本地启动时
+    "local": "http://127.0.0.1:8000/",
+}
+DEFAULT_ENV = "dev"
+DEFAULT_BASE_URL = ENV_BASE_URLS[DEFAULT_ENV]
 OBJECT_PREFIX = "devdata"  # MinIO 对象前缀
 PART_SIZE = 16 * 1024 * 1024
 CONCURRENCY = 8
-
-# MGSDB 本地 HTTP 提交地址（已从 https 改为 http）
-WEB_SUBMIT_URL = "http://127.0.0.1:8000/api/development_data/web_submit"
-
-# —— 取消 Keycloak ——
-# 不再需要任何 Keycloak 配置；下方的获取 Token 逻辑已移除
-
-# 自定义用户头：把 kevin 作为用户信息传给后端
-UNICORN_USER = "kevin"          # 需要传递的用户名
-UNICORN_USER_HEADER = "unicorn_user"  # 后端读取的自定义头字段名
+DEFAULT_TEMPLATE_ID = "1bada3ae-630f-4924-a8c5-270aaf155d90"
+DEFAULT_REVIEW_STATUS = "unreviewed"
 
 # 目录监控稳定性阈值
 QUIET_SECS = 20
 POLL_INTERVAL = 3
+
+
+@dataclass
+class UploadContext:
+    client: BackendUploadClient
+    part_upload_url: str
+    web_submit_url: str
+    template_id: str = DEFAULT_TEMPLATE_ID
+    review_status: str = DEFAULT_REVIEW_STATUS
 
 # 文件类型
 TEXT_EXTS = {".csv", ".tsv", ".txt", ".dat", ".log", ""}  # "" -> 无扩展名文本
@@ -264,21 +279,50 @@ def zip_txt_in_data(subdir_path: str) -> Optional[str]:
     return zip_path
 
 # ===================== 分片上传（预签名接口） =====================
-def api_post(data: dict, files: Dict | None = None, api: str = API_BASE, timeout=180):
-    r = requests.post(api, data=data, files=files, timeout=timeout)
-    r.raise_for_status()
-    return r.json()
+def api_post(
+    session: requests.Session,
+    api: str,
+    data: dict,
+    *,
+    headers: Optional[Dict[str, str]] = None,
+    files: Dict | None = None,
+    timeout: int = 180,
+):
+    req_headers = dict(headers or {})
+    resp = session.post(api, data=data, files=files, headers=req_headers or None, timeout=timeout)
+    resp.raise_for_status()
+    return resp.json()
 
-def init_upload(file_path: str, content_type: str, prefix: str, api: str):
-    resp = api_post({
-        "op": "init",
-        "filename": os.path.basename(file_path),
-        "content_type": content_type,
-        "object_prefix": prefix
-    }, api=api)
+
+def init_upload(
+    session: requests.Session,
+    headers: Dict[str, str],
+    file_path: str,
+    content_type: str,
+    prefix: str,
+    api: str,
+):
+    resp = api_post(
+        session,
+        api,
+        {
+            "op": "init",
+            "filename": os.path.basename(file_path),
+            "content_type": content_type,
+            "object_prefix": prefix,
+        },
+        headers=headers,
+    )
     return resp["session_id"], resp["key"]
 
-def sign_parts(session_id: str, parts: List[int], api: str) -> Dict[int, str]:
+
+def sign_parts(
+    session: requests.Session,
+    headers: Dict[str, str],
+    session_id: str,
+    parts: List[int],
+    api: str,
+) -> Dict[int, str]:
     parts = sorted(set(parts))
     ranges = []
     s = parts[0]
@@ -291,16 +335,44 @@ def sign_parts(session_id: str, parts: List[int], api: str) -> Dict[int, str]:
             s = e = p
     ranges.append((s, e))
     expr = ",".join([f"{a}-{b}" if a != b else f"{a}" for a, b in ranges])
-    j = api_post({"op": "sign", "session_id": session_id, "part_numbers": expr}, api=api)
+    j = api_post(
+        session,
+        api,
+        {"op": "sign", "session_id": session_id, "part_numbers": expr},
+        headers=headers,
+    )
     return {int(it["part_number"]): it["url"] for it in j["parts"]}
 
-def list_uploaded(session_id: str, api: str) -> Dict[int, str]:
-    j = api_post({"op": "list", "session_id": session_id}, api=api)
+
+def list_uploaded(
+    session: requests.Session,
+    headers: Dict[str, str],
+    session_id: str,
+    api: str,
+) -> Dict[int, str]:
+    j = api_post(
+        session,
+        api,
+        {"op": "list", "session_id": session_id},
+        headers=headers,
+    )
     return {int(p["PartNumber"]): p["ETag"].strip('"') for p in j.get("parts", [])}
 
-def complete_upload(session_id: str, pn_etags: List[Tuple[int, str]], api: str):
+
+def complete_upload(
+    session: requests.Session,
+    headers: Dict[str, str],
+    session_id: str,
+    pn_etags: List[Tuple[int, str]],
+    api: str,
+):
     parts = [{"PartNumber": pn, "ETag": etag} for pn, etag in sorted(pn_etags, key=lambda x: x[0])]
-    return api_post({"op": "complete", "session_id": session_id, "parts_json": json.dumps({"parts": parts})}, api=api)
+    return api_post(
+        session,
+        api,
+        {"op": "complete", "session_id": session_id, "parts_json": json.dumps({"parts": parts})},
+        headers=headers,
+    )
 
 def plan_parts(file_size: int, part_size: int) -> List[Tuple[int, int, int]]:
     n = math.ceil(file_size / part_size)
@@ -325,20 +397,30 @@ def put_part(url: str, path: str, offset: int, size: int, pn: int, max_retry=5) 
             time.sleep(0.8 * (2 ** k))
     raise RuntimeError(f"part {pn} failed: {last}")
 
-def multipart_upload(file_path: str, content_type: str, object_prefix: str = OBJECT_PREFIX, api: str = API_BASE,
-                     part_size: int = PART_SIZE, concurrency: int = CONCURRENCY, resume: bool = True) -> str:
+def multipart_upload(
+    file_path: str,
+    content_type: str,
+    *,
+    session: requests.Session,
+    headers: Dict[str, str],
+    api: str,
+    object_prefix: str = OBJECT_PREFIX,
+    part_size: int = PART_SIZE,
+    concurrency: int = CONCURRENCY,
+    resume: bool = True,
+) -> str:
     size = os.path.getsize(file_path)
     if size == 0:
         raise RuntimeError("empty file")
     if part_size < 5 * 1024 * 1024:
         raise RuntimeError("part-size must be >=5MB")
-    session_id, key = init_upload(file_path, content_type, object_prefix, api)
+    session_id, key = init_upload(session, headers, file_path, content_type, object_prefix, api)
     print(f"[init] {os.path.basename(file_path)} session={session_id} key={key}")
     plan = plan_parts(size, part_size)
-    done_map = list_uploaded(session_id, api) if resume else {}
+    done_map = list_uploaded(session, headers, session_id, api) if resume else {}
     to_do = [pn for pn, _, _ in plan if pn not in done_map]
     if to_do:
-        urls = sign_parts(session_id, to_do, api)
+        urls = sign_parts(session, headers, session_id, to_do, api)
         results: Dict[int, str] = {}
         with ThreadPoolExecutor(max_workers=concurrency) as ex:
             futs = {ex.submit(put_part, urls[pn], file_path, off, sz, pn): pn
@@ -355,7 +437,7 @@ def multipart_upload(file_path: str, content_type: str, object_prefix: str = OBJ
     else:
         print("[resume] all parts already uploaded")
     pairs = [(pn, done_map[pn]) for pn, _, _ in plan]
-    resp = complete_upload(session_id, pairs, api)
+    resp = complete_upload(session, headers, session_id, pairs, api)
     url = resp.get("url")
     if not url:
         raise RuntimeError("no url in complete response")
@@ -438,7 +520,7 @@ def wait_until_stable(path: str, quiet_secs: int, poll_interval: int, max_wait_s
             return False
 
 # ===================== 子目录“稳定后”主流程 =====================
-def on_directory_ready(dir_path: str):
+def on_directory_ready(dir_path: str, ctx: UploadContext):
     print(f"[READY] {dir_path}")
 
     reg = extract_register_info(dir_path)
@@ -467,32 +549,40 @@ def on_directory_ready(dir_path: str):
     # 2) 打包 data/ 下 txt（递归）
     zip_path = zip_txt_in_data(dir_path)  # 可为 None
 
-    # 3) 分片上传（通过后端预签名接口，无鉴权）
-    xy_url = multipart_upload(xy_csv_path, "text/csv", OBJECT_PREFIX, API_BASE)
-    zip_url = multipart_upload(zip_path, "application/zip", OBJECT_PREFIX, API_BASE) if zip_path else None
+    # 3) 分片上传（预签名接口，携带登录令牌）
+    session = ctx.client.session
+    xy_url = multipart_upload(
+        xy_csv_path,
+        "text/csv",
+        session=session,
+        headers=ctx.client.auth_headers(),
+        api=ctx.part_upload_url,
+    )
+    zip_url = None
+    if zip_path:
+        zip_url = multipart_upload(
+            zip_path,
+            "application/zip",
+            session=session,
+            headers=ctx.client.auth_headers(),
+            api=ctx.part_upload_url,
+        )
 
     # 4) 读取模板并合成 payload
     payload = build_payload_from_template(TEMPLATE_JSON_PATH, sample, date, reg, xy_url, zip_url)
 
-    # 5) 直接提交到后端（本地 HTTP），携带用户头（kevin）
-    # headers = {"Content-Type": "application/json"}
-    # if UNICORN_USER:
-    #     headers[UNICORN_USER_HEADER] = UNICORN_USER
-    # resp = requests.post(WEB_SUBMIT_URL, data=json.dumps(payload), headers=headers, timeout=180)
-    # print(f"[WEB_SUBMIT] {resp.status_code} {resp.text}")
-    headers = {"unicorn_user": "kevin"}  # 不手动写 Content-Type
-    TEMPLATE_ID = "1bada3ae-630f-4924-a8c5-270aaf155d90"
-    REVIEW_STATUS = "unreviewed"
-
+    # 5) 登录状态提交到后端 web_submit
     wrapped = {
-        "template_id": TEMPLATE_ID,
+        "template_id": ctx.template_id,
         "json_data": json.dumps(payload, ensure_ascii=False),
-        "review_status": REVIEW_STATUS,
-
-
+        "review_status": ctx.review_status,
     }
-    # print(json.dumps(payload, ensure_ascii=False))
-    resp = requests.post(WEB_SUBMIT_URL, json=wrapped, headers=headers, timeout=30)
+    resp = session.post(
+        ctx.web_submit_url,
+        json=wrapped,
+        headers=ctx.client.auth_headers(),
+        timeout=30,
+    )
 
     if resp.status_code >= 400:
         print(f"[WEB_SUBMIT_ERR] {resp.status_code}\n{resp.text}")
@@ -502,12 +592,13 @@ def on_directory_ready(dir_path: str):
 
 # ===================== 监控器（仅监控“一级子目录创建”） =====================
 class FirstLevelDirHandler(FileSystemEventHandler):
-    def __init__(self, root: str, quiet_secs: int, poll_interval: int):
+    def __init__(self, root: str, quiet_secs: int, poll_interval: int, ctx: UploadContext):
         super().__init__()
         self.root = os.path.abspath(root)
         self.quiet_secs = quiet_secs
         self.poll_interval = poll_interval
         self.pending = set()
+        self.ctx = ctx
 
     def is_first_level_subdir(self, path: str) -> bool:
         path = os.path.abspath(path)
@@ -526,10 +617,10 @@ class FirstLevelDirHandler(FileSystemEventHandler):
         print(f"[CREATE] first-level dir: {subdir}")
 
         def worker():
-            ok = wait_until_stable(subdir, QUIET_SECS, POLL_INTERVAL)
+            ok = wait_until_stable(subdir, self.quiet_secs, self.poll_interval)
             if ok:
                 try:
-                    on_directory_ready(subdir)
+                    on_directory_ready(subdir, self.ctx)
                 finally:
                     self.pending.discard(subdir)
             else:
@@ -540,11 +631,26 @@ class FirstLevelDirHandler(FileSystemEventHandler):
 
 # ===================== 入口 =====================
 def main():
-    # on_directory_ready("test")
-    ap = argparse.ArgumentParser(description="Watch new subdirs; parse, zip, upload; load template.json; submit JSON (local http, no auth).")
+    ap = argparse.ArgumentParser(
+        description="Watch new subdirs; parse, zip, upload; load template.json; submit JSON with authenticated requests.")
     ap.add_argument("--root", required=True, help="Root folder to watch (first-level subdirs).")
     ap.add_argument("--quiet-secs", type=int, default=QUIET_SECS, help="Seconds of no changes to treat subdir as stable.")
     ap.add_argument("--poll-interval", type=int, default=POLL_INTERVAL, help="Polling interval while checking stability.")
+    ap.add_argument(
+        "--env",
+        choices=sorted(ENV_BASE_URLS.keys()),
+        default=DEFAULT_ENV,
+        help="快捷设置后端环境，默认 dev (https://test.mgsdb.sjtu.edu.cn/)。指定 --base-url 时忽略。",
+    )
+    ap.add_argument(
+        "--base-url",
+        default=None,
+        help="Backend base URL. 若未指定则根据 --env 选择预设地址。",
+    )
+    ap.add_argument("--username", help="Backend login username (or set UPLOAD_USERNAME env variable).")
+    ap.add_argument("--password", help="Backend login password (or set UPLOAD_PASSWORD env variable).")
+    ap.add_argument("--template-id", default=DEFAULT_TEMPLATE_ID, help="Template ID for web_submit payload.")
+    ap.add_argument("--review-status", default=DEFAULT_REVIEW_STATUS, help="Review status to store with the submission.")
     args = ap.parse_args()
 
     root = os.path.abspath(args.root)
@@ -556,11 +662,50 @@ def main():
         print(f"[ERROR] template.json not found next to script: {TEMPLATE_JSON_PATH}", file=sys.stderr)
         sys.exit(2)
 
-    handler = FirstLevelDirHandler(root, args.quiet_secs, args.poll_interval)
+    username = args.username or os.environ.get("UPLOAD_USERNAME")
+    password = args.password or os.environ.get("UPLOAD_PASSWORD")
+    if not username or not password:
+        print("[ERROR] --username/--password or UPLOAD_USERNAME/UPLOAD_PASSWORD env vars must be provided", file=sys.stderr)
+        sys.exit(3)
+
+    if args.base_url:
+        base_url = args.base_url
+        resolved_env = None
+    else:
+        base_url = ENV_BASE_URLS[args.env]
+        resolved_env = args.env
+    base_url = base_url.rstrip("/") + "/"
+    client = BackendUploadClient(base_url)
+    try:
+        client.login(username, password)
+    except Exception as exc:
+        print(f"[ERROR] login failed: {exc}", file=sys.stderr)
+        sys.exit(4)
+
+    part_upload_url = urljoin(client.base_url, "api/development_data/part_upload")
+    web_submit_url = urljoin(client.base_url, "api/development_data/web_submit")
+    ctx = UploadContext(
+        client=client,
+        part_upload_url=part_upload_url,
+        web_submit_url=web_submit_url,
+        template_id=args.template_id,
+        review_status=args.review_status,
+    )
+
+    handler = FirstLevelDirHandler(root, args.quiet_secs, args.poll_interval, ctx)
     obs = Observer()
     obs.schedule(handler, root, recursive=False)
     obs.start()
-    print(f"[WATCHING] {root} (quiet={args.quiet_secs}s, poll={args.poll_interval}s)")
+    if resolved_env:
+        print(
+            f"[WATCHING] {root} (quiet={args.quiet_secs}s, poll={args.poll_interval}s)"
+            f" -> {base_url} [env={resolved_env}]"
+        )
+    else:
+        print(
+            f"[WATCHING] {root} (quiet={args.quiet_secs}s, poll={args.poll_interval}s)"
+            f" -> {base_url}"
+        )
     try:
         while True:
             time.sleep(1)
