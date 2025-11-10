@@ -1,9 +1,9 @@
 import os
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Optional, List, Callable
+from typing import Optional, List, Callable, Dict, Any
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -41,11 +41,13 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     refresh_token: Optional[str] = None
+    user: Optional[Dict[str, Any]] = None
 
 class TokenPair(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    user: Optional[Dict[str, Any]] = None
 
 class TokenData(BaseModel):
     username: Optional[str] = None
@@ -59,7 +61,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")  # retained fo
 
 # OAuth2 Scheme
 # The tokenUrl points to our future login endpoint.
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token", auto_error=True)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token", auto_error=False)
+
+ACCESS_COOKIE_NAME = "access_token"
 
 
 # --- Password and Token Utility Functions ---
@@ -168,7 +172,11 @@ def authenticate_user(db_session: Session, username: str, password: str):
     auth_logger.info(f"login success username={username} method=pgcrypto")
     return user
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db_session: Session = Depends(db.get_db)):
+async def get_current_user(
+    request: Request,
+    token: Optional[str] = Depends(oauth2_scheme),
+    db_session: Session = Depends(db.get_db),
+):
     """
     Decodes the JWT token, validates it, and returns the user model.
     This function will be used as a dependency for protected endpoints.
@@ -178,8 +186,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db_session: Sess
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    token_value = token or request.cookies.get(ACCESS_COOKIE_NAME)
+    if not token_value:
+        raise credentials_exception
+
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token_value, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")
         if not isinstance(username, str):
             raise credentials_exception
