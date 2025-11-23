@@ -10,8 +10,7 @@
 4) 新增 ``--env`` 参数并默认指向 dev（https://test.mgsdb.sjtu.edu.cn/），便于同步最新环境配置。
 """
 
-import os, re, io, csv, sys, time, json, argparse, math, requests, zipfile, threading
-from dataclasses import dataclass
+import os, re, io, csv, sys, time, json, argparse, zipfile
 from urllib.parse import urljoin
 
 os.environ.pop('HTTP_PROXY', None)
@@ -20,27 +19,25 @@ os.environ.pop('HTTPS_PROXY', None)
 os.environ['NO_PROXY'] = '127.0.0.1,localhost,::1'
 
 from typing import List, Tuple, Optional, Dict
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
 from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler, FileSystemEvent
 
 from backend_client import BackendUploadClient
+from transfer_utils import (
+    DEFAULT_CONCURRENCY,
+    DEFAULT_ENV,
+    DEFAULT_OBJECT_PREFIX,
+    DEFAULT_PART_SIZE,
+    ENV_BASE_URLS,
+    FirstLevelDirHandler,
+    UploadContext,
+    multipart_upload,
+)
 
 # ===================== 基本配置 =====================
-ENV_BASE_URLS = {
-    # 开发环境：外网可访问的测试站点
-    "dev": "https://test.mgsdb.sjtu.edu.cn/",
-    # 生产环境：正式域名
-    "prod": "https://mgsdb.sjtu.edu.cn/",
-    # 本地调试：FastAPI 本地启动时
-    "local": "http://127.0.0.1:8000/",
-}
-DEFAULT_ENV = "dev"
-DEFAULT_BASE_URL = ENV_BASE_URLS[DEFAULT_ENV]
-OBJECT_PREFIX = "devdata"  # MinIO 对象前缀
-PART_SIZE = 16 * 1024 * 1024
-CONCURRENCY = 8
+OBJECT_PREFIX = DEFAULT_OBJECT_PREFIX  # MinIO 对象前缀
+PART_SIZE = DEFAULT_PART_SIZE
+CONCURRENCY = DEFAULT_CONCURRENCY
 DEFAULT_TEMPLATE_ID = "1bada3ae-630f-4924-a8c5-270aaf155d90"
 DEFAULT_REVIEW_STATUS = "unreviewed"
 
@@ -48,14 +45,6 @@ DEFAULT_REVIEW_STATUS = "unreviewed"
 QUIET_SECS = 20
 POLL_INTERVAL = 3
 
-
-@dataclass
-class UploadContext:
-    client: BackendUploadClient
-    part_upload_url: str
-    web_submit_url: str
-    template_id: str = DEFAULT_TEMPLATE_ID
-    review_status: str = DEFAULT_REVIEW_STATUS
 
 # 文件类型
 TEXT_EXTS = {".csv", ".tsv", ".txt", ".dat", ".log", ""}  # "" -> 无扩展名文本
@@ -283,172 +272,6 @@ def zip_txt_in_data(subdir_path: str) -> Optional[str]:
     print(f"[ZIP] {zip_path} ({len(txt_files)} files)")
     return zip_path
 
-# ===================== 分片上传（预签名接口） =====================
-def api_post(
-    session: requests.Session,
-    api: str,
-    data: dict,
-    *,
-    headers: Optional[Dict[str, str]] = None,
-    files: Dict | None = None,
-    timeout: int = 180,
-):
-    req_headers = dict(headers or {})
-    resp = session.post(api, data=data, files=files, headers=req_headers or None, timeout=timeout)
-    resp.raise_for_status()
-    return resp.json()
-
-
-def init_upload(
-    session: requests.Session,
-    headers: Dict[str, str],
-    file_path: str,
-    content_type: str,
-    prefix: str,
-    api: str,
-):
-    resp = api_post(
-        session,
-        api,
-        {
-            "op": "init",
-            "filename": os.path.basename(file_path),
-            "content_type": content_type,
-            "object_prefix": prefix,
-        },
-        headers=headers,
-    )
-    return resp["session_id"], resp["key"]
-
-
-def sign_parts(
-    session: requests.Session,
-    headers: Dict[str, str],
-    session_id: str,
-    parts: List[int],
-    api: str,
-) -> Dict[int, str]:
-    parts = sorted(set(parts))
-    ranges = []
-    s = parts[0]
-    e = parts[0]
-    for p in parts[1:]:
-        if p == e + 1:
-            e = p
-        else:
-            ranges.append((s, e))
-            s = e = p
-    ranges.append((s, e))
-    expr = ",".join([f"{a}-{b}" if a != b else f"{a}" for a, b in ranges])
-    j = api_post(
-        session,
-        api,
-        {"op": "sign", "session_id": session_id, "part_numbers": expr},
-        headers=headers,
-    )
-    return {int(it["part_number"]): it["url"] for it in j["parts"]}
-
-
-def list_uploaded(
-    session: requests.Session,
-    headers: Dict[str, str],
-    session_id: str,
-    api: str,
-) -> Dict[int, str]:
-    j = api_post(
-        session,
-        api,
-        {"op": "list", "session_id": session_id},
-        headers=headers,
-    )
-    return {int(p["PartNumber"]): p["ETag"].strip('"') for p in j.get("parts", [])}
-
-
-def complete_upload(
-    session: requests.Session,
-    headers: Dict[str, str],
-    session_id: str,
-    pn_etags: List[Tuple[int, str]],
-    api: str,
-):
-    parts = [{"PartNumber": pn, "ETag": etag} for pn, etag in sorted(pn_etags, key=lambda x: x[0])]
-    return api_post(
-        session,
-        api,
-        {"op": "complete", "session_id": session_id, "parts_json": json.dumps({"parts": parts})},
-        headers=headers,
-    )
-
-def plan_parts(file_size: int, part_size: int) -> List[Tuple[int, int, int]]:
-    n = math.ceil(file_size / part_size)
-    return [(i + 1, i * part_size, min(part_size, file_size - i * part_size)) for i in range(n)]
-
-def put_part(url: str, path: str, offset: int, size: int, pn: int, max_retry=5) -> str:
-    last = None
-    for k in range(max_retry):
-        try:
-            with open(path, "rb") as f:
-                f.seek(offset)
-                data = f.read(size)
-            r = requests.put(url, data=data, timeout=600)
-            if r.status_code // 100 != 2:
-                raise RuntimeError(f"HTTP {r.status_code}")
-            etag = r.headers.get("ETag") or next((v for k, v in r.headers.items() if k.lower() == "etag"), None)
-            if not etag:
-                raise RuntimeError("No ETag in response")
-            return etag.strip('"')
-        except Exception as e:
-            last = e
-            time.sleep(0.8 * (2 ** k))
-    raise RuntimeError(f"part {pn} failed: {last}")
-
-def multipart_upload(
-    file_path: str,
-    content_type: str,
-    *,
-    session: requests.Session,
-    headers: Dict[str, str],
-    api: str,
-    object_prefix: str = OBJECT_PREFIX,
-    part_size: int = PART_SIZE,
-    concurrency: int = CONCURRENCY,
-    resume: bool = True,
-) -> str:
-    size = os.path.getsize(file_path)
-    if size == 0:
-        raise RuntimeError("empty file")
-    if part_size < 5 * 1024 * 1024:
-        raise RuntimeError("part-size must be >=5MB")
-    session_id, key = init_upload(session, headers, file_path, content_type, object_prefix, api)
-    print(f"[init] {os.path.basename(file_path)} session={session_id} key={key}")
-    plan = plan_parts(size, part_size)
-    done_map = list_uploaded(session, headers, session_id, api) if resume else {}
-    to_do = [pn for pn, _, _ in plan if pn not in done_map]
-    if to_do:
-        urls = sign_parts(session, headers, session_id, to_do, api)
-        results: Dict[int, str] = {}
-        with ThreadPoolExecutor(max_workers=concurrency) as ex:
-            futs = {ex.submit(put_part, urls[pn], file_path, off, sz, pn): pn
-                    for pn, off, sz in plan if pn in to_do}
-            done = 0
-            for fut in as_completed(futs):
-                pn = futs[fut]
-                etag = fut.result()
-                results[pn] = etag
-                done += 1
-                if done % 10 == 0 or done == len(futs):
-                    print(f"[upload] {done}/{len(futs)} parts")
-        done_map.update(results)
-    else:
-        print("[resume] all parts already uploaded")
-    pairs = [(pn, done_map[pn]) for pn, _, _ in plan]
-    resp = complete_upload(session, headers, session_id, pairs, api)
-    url = resp.get("url")
-    if not url:
-        raise RuntimeError("no url in complete response")
-    print(f"[complete] {os.path.basename(file_path)} -> {url}")
-    return url
-
 # ===================== 从中文模板构建 payload（覆盖/补全） =====================
 def build_payload_from_template(template_path: str, sample: str, date: str, reg: dict, xy_url: str, zip_url: Optional[str]) -> dict:
     """
@@ -492,37 +315,6 @@ def build_payload_from_template(template_path: str, sample: str, date: str, reg:
         rawfiles["表征原始数据文件"] = zip_url
 
     return payload
-
-# ===================== 目录稳定检测 =====================
-def snapshot_tree(path: str):
-    snap = []
-    for dirpath, _, filenames in os.walk(path):
-        for fn in filenames:
-            full = os.path.join(dirpath, fn)
-            try:
-                st = os.stat(full)
-                snap.append((os.path.relpath(full, path), st.st_size, int(st.st_mtime)))
-            except FileNotFoundError:
-                continue
-    snap.sort()
-    return snap
-
-def wait_until_stable(path: str, quiet_secs: int, poll_interval: int, max_wait_secs: int = 3600) -> bool:
-    start = time.time()
-    prev = snapshot_tree(path)
-    stable_for = 0
-    while True:
-        time.sleep(poll_interval)
-        cur = snapshot_tree(path)
-        if cur == prev:
-            stable_for += poll_interval
-        else:
-            stable_for = 0
-            prev = cur
-        if stable_for >= quiet_secs:
-            return True
-        if time.time() - start > max_wait_secs:
-            return False
 
 # ===================== 子目录“稳定后”主流程 =====================
 def on_directory_ready(dir_path: str, ctx: UploadContext):
@@ -595,45 +387,6 @@ def on_directory_ready(dir_path: str, ctx: UploadContext):
 
     print(f"[WEB_SUBMIT] {resp.status_code} {resp.text}")
 
-# ===================== 监控器（仅监控“一级子目录创建”） =====================
-class FirstLevelDirHandler(FileSystemEventHandler):
-    def __init__(self, root: str, quiet_secs: int, poll_interval: int, ctx: UploadContext):
-        super().__init__()
-        self.root = os.path.abspath(root)
-        self.quiet_secs = quiet_secs
-        self.poll_interval = poll_interval
-        self.pending = set()
-        self.ctx = ctx
-
-    def is_first_level_subdir(self, path: str) -> bool:
-        path = os.path.abspath(path)
-        parent = os.path.dirname(path)
-        return os.path.isdir(path) and os.path.samefile(parent, self.root)
-
-    def on_created(self, event: FileSystemEvent):
-        if not event.is_directory:
-            return
-        subdir = os.path.abspath(event.src_path)
-        if not self.is_first_level_subdir(subdir):
-            return
-        if subdir in self.pending:
-            return
-        self.pending.add(subdir)
-        print(f"[CREATE] first-level dir: {subdir}")
-
-        def worker():
-            ok = wait_until_stable(subdir, self.quiet_secs, self.poll_interval)
-            if ok:
-                try:
-                    on_directory_ready(subdir, self.ctx)
-                finally:
-                    self.pending.discard(subdir)
-            else:
-                print(f"[TIMEOUT] {subdir} not stable in time")
-                self.pending.discard(subdir)
-
-        threading.Thread(target=worker, daemon=True).start()
-
 # ===================== 入口 =====================
 def main():
     ap = argparse.ArgumentParser(
@@ -700,7 +453,13 @@ def main():
         review_status=args.review_status,
     )
 
-    handler = FirstLevelDirHandler(root, args.quiet_secs, args.poll_interval, ctx)
+    handler = FirstLevelDirHandler(
+        root,
+        args.quiet_secs,
+        args.poll_interval,
+        on_directory_ready,
+        ctx,
+    )
     obs = Observer()
     obs.schedule(handler, root, recursive=False)
     obs.start()
