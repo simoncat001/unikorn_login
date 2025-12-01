@@ -25,10 +25,14 @@ def get_single_word(post_data, single_word_obj: dict):
         single_word["content"] = post_data
     elif single_word_type == "number":
         single_word["content"] = post_data
-        single_word["unit"] = single_word_obj["unit"]
+        if "unit" in single_word_obj:
+            single_word["unit"] = single_word_obj.get("unit", "")
     elif single_word_type == "number_range":
-        single_word["content"] = {"start": post_data["start"], "end": post_data["end"]}
-        single_word["unit"] = single_word_obj["unit"]
+        start = post_data.get("start") if isinstance(post_data, dict) else None
+        end = post_data.get("end") if isinstance(post_data, dict) else None
+        single_word["content"] = {"start": start, "end": end}
+        if "unit" in single_word_obj:
+            single_word["unit"] = single_word_obj.get("unit", "")
     else:
         file_name = ""
         file_sha256 = ""
@@ -365,10 +369,12 @@ def rebuild_data_content_for_display(
     try:
         get_development_data_rec(origin_post, word_order, data_content)
     except Exception:
-        return json_data
+        # 即便部分字段解析失败，也尽可能返回已生成的内容
+        if not data_content:
+            return json_data
 
     filled = deepcopy(json_data)
-    filled["data_content"] = data_content
+    filled["data_content"] = data_content or json_data.get("data_content") or []
     # 如果原始标题缺失，沿用首字段内容作为标题
     if data_content and data_content[0].get("content") and not filled.get("title"):
         filled["title"] = data_content[0].get("content")
