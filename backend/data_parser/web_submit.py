@@ -28,8 +28,15 @@ def get_single_word(post_data, single_word_obj: dict):
         if "unit" in single_word_obj:
             single_word["unit"] = single_word_obj.get("unit", "")
     elif single_word_type == "number_range":
-        start = post_data.get("start") if isinstance(post_data, dict) else None
-        end = post_data.get("end") if isinstance(post_data, dict) else None
+        if isinstance(post_data, dict):
+            start = post_data.get("start")
+            end = post_data.get("end")
+        elif isinstance(post_data, (list, tuple)):
+            start = post_data[0] if len(post_data) > 0 else None
+            end = post_data[1] if len(post_data) > 1 else None
+        else:
+            start = post_data
+            end = None
         single_word["content"] = {"start": start, "end": end}
         if "unit" in single_word_obj:
             single_word["unit"] = single_word_obj.get("unit", "")
@@ -260,6 +267,54 @@ def _merge_word_order_with_payload(word_order: list, payload: dict) -> list:
     return merged
 
 
+def _merge_word_order_with_template(primary: list, secondary: list) -> list:
+    """
+    合并两个 word_order，优先保留 primary 的顺序/配置，缺失的再用 secondary 补齐。
+
+    - 同 title 的节点会递归合并子级 order/element_type；
+    - primary 中不存在的节点会按 secondary 的顺序追加。
+    """
+
+    if not isinstance(primary, list):
+        primary = []
+    if not isinstance(secondary, list):
+        secondary = []
+
+    merged = deepcopy(primary)
+
+    def _merge_node(target: dict, supplement: dict) -> None:
+        if target.get("type") == "array":
+            if not target.get("element_type") and supplement.get("element_type"):
+                target["element_type"] = deepcopy(supplement.get("element_type"))
+            elif (
+                target.get("element_type", {}).get("type") == "object"
+                and supplement.get("element_type", {}).get("type") == "object"
+            ):
+                target["element_type"]["order"] = _merge_word_order_with_template(
+                    target["element_type"].get("order") or [],
+                    supplement["element_type"].get("order") or [],
+                )
+        elif target.get("type") == "object":
+            target["order"] = _merge_word_order_with_template(
+                target.get("order") or [], supplement.get("order") or []
+            )
+        elif not target.get("type") and supplement.get("type"):
+            target["type"] = supplement.get("type")
+
+    for supplement in secondary:
+        title = supplement.get("title")
+        if not title:
+            continue
+
+        existing = next((item for item in merged if item.get("title") == title), None)
+        if existing:
+            _merge_node(existing, supplement)
+        else:
+            merged.append(deepcopy(supplement))
+
+    return merged
+
+
 def get_development_data_rec(post_data: dict, word_order: list, data_content_out: list):
     errors: List[Dict[str, str]] = []
     post_data = safe_json_loads(post_data)
@@ -336,6 +391,7 @@ def get_development_data(
     json_data["data_content"] = data_content
     json_data["origin_post_data"] = post_data
     json_data["title"] = data_content[0]["content"]
+    json_data["word_order"] = word_oder
     json_data["citation_template"] = "{}，{}[{}].".format(
         template_json_schema["source_standard_number"],
         template.name,
@@ -361,9 +417,12 @@ def rebuild_data_content_for_display(
     if not template or not template.json_schema:
         return json_data
 
-    word_order = _merge_word_order_with_payload(
-        template.json_schema.get("word_order") or [], origin_post
+    template_word_order = template.json_schema.get("word_order") or []
+    word_order = _merge_word_order_with_template(
+        json_data.get("word_order") or [], template_word_order
     )
+
+    word_order = _merge_word_order_with_payload(word_order, origin_post)
 
     data_content: List[dict] = []
     try:

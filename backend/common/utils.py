@@ -497,6 +497,11 @@ def generate_development_json_data(data: schemas.DataCreate, db: Session):
         ).get("word_order", [])
         if _word_order_size(rebuilt) > _word_order_size(word_order):
             word_order = rebuilt
+
+    word_order = web_submit._merge_word_order_with_template(
+        word_order, schema.get("word_order") or []
+    )
+    word_order = web_submit._merge_word_order_with_payload(word_order, data.json_data)
     data_content = []
     
     normalized, errors = web_submit.get_development_data_rec(data.json_data, word_order, data_content)
@@ -511,6 +516,7 @@ def generate_development_json_data(data: schemas.DataCreate, db: Session):
         "data_content": data_content,
         "origin_post_data": normalized,  # 写规范化后的（含文件引用），非原始
         "title": normalized.get("title") or template.name,
+        "word_order": word_order,
         "citation_template": "{}，{}[{}].".format(
             schema.get("source_standard_number", ""),
             template.name,
