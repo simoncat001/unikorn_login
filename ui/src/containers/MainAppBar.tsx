@@ -362,8 +362,8 @@ const UnikornLogoButton: React.FC = () => {
       className={classes.logoButton}
       color="inherit"
       onClick={() => {
-                  routerHistory.push("/");
-                }}
+        routerHistory.push("/");
+      }}
       disableRipple
     >
       <Typography component={"span"} className={fontClasses.LogoFont}>
