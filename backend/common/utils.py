@@ -509,6 +509,8 @@ def generate_development_json_data(data: schemas.DataCreate, db: Session):
     if errors:
         return None, {"status": 422, "message": "invalid payload", "errors": errors}, {}
 
+    now = datetime.datetime.now()
+
     json_data = {
         "template_name": template.name,
         "data_generate_method": schema.get("data_generate_method"),
@@ -516,7 +518,9 @@ def generate_development_json_data(data: schemas.DataCreate, db: Session):
         "template_type": schema.get("template_type"),
         "data_content": data_content,
         "origin_post_data": normalized,  # 写规范化后的（含文件引用），非原始
-        "title": normalized.get("title") or template.name,
+        "title": web_submit.resolve_title_from_payload(
+            normalized, template.name, now=now
+        ),
         "word_order": word_order,
         "citation_template": "{}，{}[{}].".format(
             schema.get("source_standard_number", ""),

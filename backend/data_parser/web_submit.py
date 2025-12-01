@@ -3,6 +3,7 @@ from urllib.parse import unquote
 import asyncio
 import re, json
 from copy import deepcopy
+import datetime
 from typing import Dict, List
 from database import template_crud
 from common import object_store_service, utils, constants, error, status
@@ -324,6 +325,20 @@ def _merge_word_order_with_template(primary: list, secondary: list) -> list:
     return merged
 
 
+def resolve_title_from_payload(
+    payload: dict, template_name: str, now: datetime.datetime | None = None
+) -> str:
+    """Pick an experiment title from payload, otherwise fall back to template name + timestamp."""
+
+    if isinstance(payload, dict):
+        raw_title = payload.get("实验名称")
+        if isinstance(raw_title, str) and raw_title.strip():
+            return raw_title.strip()
+
+    timestamp = (now or datetime.datetime.now()).strftime("%Y-%m-%d %H:%M:%S")
+    return f"{template_name}-{timestamp}"
+
+
 def get_development_data_rec(post_data: dict, word_order: list, data_content_out: list):
     errors: List[Dict[str, str]] = []
     post_data = safe_json_loads(post_data)
@@ -389,6 +404,7 @@ def get_development_data(
     word_oder = _merge_word_order_with_payload(word_oder, post_data)
     data_generate_method = template_json_schema["data_generate_method"]
     template_type = template_json_schema["template_type"]
+    now = datetime.datetime.now()
     try:
         get_development_data_rec(post_data, word_oder, data_content)
     except error.FileWriteFailError:
@@ -402,7 +418,7 @@ def get_development_data(
     json_data["template_type"] = template_json_schema["template_type"]
     json_data["data_content"] = data_content
     json_data["origin_post_data"] = post_data
-    json_data["title"] = data_content[0]["content"]
+    json_data["title"] = resolve_title_from_payload(post_data, template.name, now=now)
     json_data["word_order"] = word_oder
     json_data["citation_template"] = "{}，{}[{}].".format(
         template_json_schema["source_standard_number"],
