@@ -422,7 +422,17 @@ def read_dev_data(
     if db_dev_data is None:
         raise HTTPException(status_code=404, detail="Development data not found")
     # 统一返回格式
-    return {"status": status.API_OK, "data": {"id": str(db_dev_data.id), "template_id": str(db_dev_data.template_id), "json_data": db_dev_data.json_data}}
+    hydrated = web_submit.rebuild_data_content_for_display(
+        db, str(db_dev_data.template_id), db_dev_data.json_data
+    )
+    return {
+        "status": status.API_OK,
+        "data": {
+            "id": str(db_dev_data.id),
+            "template_id": str(db_dev_data.template_id),
+            "json_data": hydrated,
+        },
+    }
 
 
 ## Removed /api/get_file endpoint (object storage deprecated)

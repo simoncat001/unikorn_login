@@ -478,7 +478,31 @@ def generate_development_json_data(data: schemas.DataCreate, db: Session):
         return None, {"status": 404, "message": "Template not found"}, {}
 
     schema = template.json_schema or {}
-    word_order = schema.get("word_order", [])
+    template_word_order = schema.get("word_order", [])
+
+    def _word_order_size(items: list) -> int:
+        size = len(items)
+        for item in items:
+            order = item.get("order", [])
+            if isinstance(order, list) and order:
+                size += _word_order_size(order)
+        return size
+
+    # 如果模板存储的 word_order 缺字段（历史数据缺失），尝试基于原始表单定义重建
+    origin_schema_create = schema.get("origin_schema_create")
+    template_type = schema.get("template_type")
+    if origin_schema_create and template_type:
+        rebuilt = data_create_schema.generate_data_create_schema(
+            origin_schema_create, template_type, db
+        ).get("word_order", [])
+        if _word_order_size(rebuilt) > _word_order_size(template_word_order):
+            template_word_order = rebuilt
+
+    payload_word_order = web_submit._infer_word_order_from_payload(data.json_data)
+    word_order = web_submit._merge_word_order_with_template(
+        template_word_order, payload_word_order
+    )
+    word_order = web_submit._merge_word_order_with_payload(word_order, data.json_data)
     data_content = []
     
     normalized, errors = web_submit.get_development_data_rec(data.json_data, word_order, data_content)
@@ -493,6 +517,7 @@ def generate_development_json_data(data: schemas.DataCreate, db: Session):
         "data_content": data_content,
         "origin_post_data": normalized,  # 写规范化后的（含文件引用），非原始
         "title": normalized.get("title") or template.name,
+        "word_order": word_order,
         "citation_template": "{}，{}[{}].".format(
             schema.get("source_standard_number", ""),
             template.name,
