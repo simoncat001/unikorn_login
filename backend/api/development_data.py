@@ -23,7 +23,7 @@ from minio.commonconfig import CopySource
 import os
 import logging
 import traceback
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Iterable, Set
 from fastapi import APIRouter, Form, HTTPException
 from common.presign_upload_service import PresignUploadService, InMemorySessionStore, UploadSession
 from common.object_store_service import _get_s3
@@ -134,6 +134,109 @@ if not logger.handlers:
 
 
 router = APIRouter()
+
+
+DOWNLOAD_URL_PREFIX = "/api/download/"
+
+
+def _maybe_extract_object_key(value: Any) -> Optional[str]:
+    """从任意值中提取 MinIO 对象 key。
+
+    支持如下格式：
+    - 直接的下载路径，如 "/api/download/<key>"
+    - 含有域名的 URL，只要 path 中包含上述下载前缀
+    - legacy 的 "file:<name>:<key>" 表达
+    返回去除前导斜线后的对象 key；无法解析时返回 None。
+    """
+
+    if isinstance(value, str):
+        candidate = value.strip()
+        if not candidate:
+            return None
+
+        # 优先处理显式下载前缀
+        if DOWNLOAD_URL_PREFIX in candidate:
+            # 如果是完整 URL，截取 path 部分
+            parsed = urllib.parse.urlparse(candidate)
+            path = parsed.path or candidate
+            idx = path.find(DOWNLOAD_URL_PREFIX)
+            if idx >= 0:
+                candidate = path[idx + len(DOWNLOAD_URL_PREFIX) :]
+        elif candidate.startswith("file:"):
+            parts = candidate.split(":", 2)
+            if len(parts) == 3:
+                candidate = parts[2]
+            else:
+                return None
+        else:
+            return None
+
+        candidate = urllib.parse.unquote(candidate).lstrip("/")
+        return candidate or None
+
+    return None
+
+
+def _collect_object_keys(payload: Any) -> Set[str]:
+    keys: Set[str] = set()
+
+    if isinstance(payload, dict):
+        for item in payload.values():
+            keys.update(_collect_object_keys(item))
+    elif isinstance(payload, list):
+        for item in payload:
+            keys.update(_collect_object_keys(item))
+    else:
+        maybe_key = _maybe_extract_object_key(payload)
+        if maybe_key:
+            keys.add(maybe_key)
+
+    return keys
+
+
+def _delete_minio_objects(object_keys: Iterable[str]) -> None:
+    """尝试删除 MinIO 中的对象，删除失败会记录日志但不会中断流程。"""
+
+    attempted: Set[str] = set()
+
+    for raw_key in object_keys:
+        if not raw_key:
+            continue
+
+        candidates = [raw_key]
+        # 兼容历史：有些对象在 uploads/ 前缀下存储
+        if not raw_key.startswith("uploads/"):
+            candidates.append(f"uploads/{raw_key}")
+
+        deleted = False
+        for candidate in candidates:
+            if candidate in attempted:
+                continue
+
+            attempted.add(candidate)
+            try:
+                client.remove_object(MINIO_BUCKET, candidate)
+                logger.info(f"Deleted MinIO object: bucket={MINIO_BUCKET}, key={candidate}")
+                deleted = True
+                break
+            except S3Error as exc:
+                if exc.code == "NoSuchKey":
+                    logger.info(
+                        f"MinIO object already missing: bucket={MINIO_BUCKET}, key={candidate}"
+                    )
+                    continue
+                logger.warning(
+                    "Failed to delete MinIO object %s: %s", candidate, exc, exc_info=True
+                )
+            except Exception:
+                logger.exception(
+                    "Unexpected error while deleting MinIO object %s", candidate
+                )
+
+        if not deleted:
+            logger.debug(
+                "No MinIO object removed for key '%s' (all candidates failed)", raw_key
+            )
 
 
 @router.post("/api/development_data/web_submit")
@@ -296,6 +399,15 @@ def delete_dev_data(
         return {"status": status.API_INVALID_PARAMETER, "message": "dev data not found"}
     if existing.json_data.get("author") and existing.json_data.get("author") != current_user.user_name:
         return {"status": status.API_PERMISSION_DENIED}
+    try:
+        object_keys = _collect_object_keys(existing.json_data)
+        if object_keys:
+            logger.info(
+                "Deleting %d MinIO object(s) linked to dev data %s", len(object_keys), object_id
+            )
+            _delete_minio_objects(object_keys)
+    except Exception:
+        logger.exception("Failed to delete associated MinIO objects for dev data %s", object_id)
     development_data_crud.delete_dev_data(db=db, id=object_id)
     return {"status": status.API_OK}
 
