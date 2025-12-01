@@ -133,8 +133,14 @@ const canDeleteUser: (uuid: string) => Promise<boolean> = async (uuid) => {
 };
 
 const getUserName: () => Promise<string> = async () => {
+  const cached = AuthService.getUser();
+  if (cached && typeof cached === "object" && cached.username) {
+    return String(cached.username);
+  }
   try {
-    let response = await ApiProvider.apiProviderGet("/api/userinfo/");
+    const response = await ApiProvider.apiProviderGet("/api/userinfo/", {
+      cache: "no-store",
+    });
     const responseData = await response.json();
     return responseData["username"] as string;
   } catch (e) {
@@ -144,8 +150,19 @@ const getUserName: () => Promise<string> = async () => {
 };
 
 const getUserDisplayName: () => Promise<string> = async () => {
+  const cached = AuthService.getUser();
+  if (cached && typeof cached === "object") {
+    const display =
+      (cached as { display_name?: unknown }).display_name ??
+      (cached as { username?: unknown }).username;
+    if (display) {
+      return String(display);
+    }
+  }
   try {
-    let response = await ApiProvider.apiProviderGet("/api/userinfo/");
+    const response = await ApiProvider.apiProviderGet("/api/userinfo/", {
+      cache: "no-store",
+    });
     const responseData = await response.json();
     return responseData["display_name"] as string;
   } catch (e) {
@@ -159,13 +176,21 @@ const isLoggedIn: () => Promise<boolean> = async () => {
   if (AuthService.isLoggedIn()) {
     return true;
   }
-  
+
+  if (AuthService.wasExplicitlyLoggedOut()) {
+    return false;
+  }
+
   // 如果没有令牌，尝试调用API检查登录状态（兼容旧版行为）
   try {
-    var fetchConfig: RequestInit = {};
-    fetchConfig.method = "GET";
-    fetchConfig.redirect = "manual";
-    let response = await fetch("/api/userinfo/", fetchConfig);
+    const fetchConfig: RequestInit = {
+      method: "GET",
+      redirect: "manual",
+      credentials: "include",
+      cache: "no-store",
+      headers: { "Cache-Control": "no-cache" },
+    };
+    const response = await fetch("/api/userinfo/", fetchConfig);
     return response.ok;
   } catch (error) {
     return false;

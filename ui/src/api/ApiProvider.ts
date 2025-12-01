@@ -4,14 +4,24 @@ import { resolveApiUrl } from "./config";
 
 type HttpMethod = "GET" | "POST" | "DELETE";
 
-function createHeaders(source?: HeadersInit): Record<string, string> {
-    const headers: Record<string, string> = {};
+type HeadersRecord = Record<string, string>;
 
+type ExecuteOptions = {
+    throwOnError: boolean;
+};
+
+type BuildRequestOptions = {
+    isFormData?: boolean;
+    body?: unknown;
+};
+
+function toHeadersRecord(source?: HeadersInit): HeadersRecord {
     if (!source) {
-        return headers;
+        return {};
     }
 
     if (typeof Headers !== "undefined" && source instanceof Headers) {
+        const headers: HeadersRecord = {};
         source.forEach((value, key) => {
             headers[key] = value;
         });
@@ -19,26 +29,27 @@ function createHeaders(source?: HeadersInit): Record<string, string> {
     }
 
     if (Array.isArray(source)) {
-        source.forEach(([key, value]) => {
+        const headers: HeadersRecord = {};
+        for (const [key, value] of source) {
             headers[key] = value;
-        });
+        }
         return headers;
     }
 
-    return { ...source } as Record<string, string>;
+    return { ...(source as HeadersRecord) };
 }
 
 async function executeWithAuth(
     url: string,
     init: RequestInit,
-    { throwOnError }: { throwOnError: boolean }
+    options: ExecuteOptions
 ): Promise<Response> {
     let response = await fetch(url, init);
 
     if (!response.ok && response.status === 401) {
         try {
             const newToken = await refresh();
-            const headers = createHeaders(init.headers);
+            const headers = toHeadersRecord(init.headers);
             headers["Authorization"] = `Bearer ${newToken}`;
             init.headers = headers;
             response = await fetch(url, init);
@@ -51,13 +62,14 @@ async function executeWithAuth(
     }
 
     if (!response.ok) {
-        if (
+        const redirectedToLogin =
             response.type === "opaqueredirect" &&
             response.url &&
-            window.location.pathname !== LOGIN_PATH
-        ) {
+            window.location.pathname !== LOGIN_PATH;
+
+        if (redirectedToLogin) {
             redirectToLogin();
-        } else if (throwOnError) {
+        } else if (options.throwOnError) {
             throw new Error(`${response.status} ${response.statusText}`);
         }
     }
@@ -68,27 +80,24 @@ async function executeWithAuth(
 function buildRequestInit(
     method: HttpMethod,
     config?: RequestInit,
-    options?: { isFormData?: boolean; body?: any }
+    options: BuildRequestOptions = {}
 ): RequestInit {
-    const baseConfig: RequestInit = {
+    const requestInit: RequestInit = {
         ...config,
         method,
         redirect: "manual",
+        credentials: config?.credentials ?? "include",
+        cache: config?.cache ?? "no-store",
     };
 
-    if (!baseConfig.credentials) {
-        baseConfig.credentials = "include";
-    }
+    const headers = toHeadersRecord(requestInit.headers);
 
-    const headers = createHeaders(baseConfig.headers);
+    const hasCacheControl = Object.keys(headers).some(
+        (key) => key.toLowerCase() === "cache-control"
+    );
 
-    if (options?.isFormData !== true && method === "POST") {
-        const hasContentType = Object.keys(headers).some(
-            (key) => key.toLowerCase() === "content-type"
-        );
-        if (!hasContentType) {
-            headers["Content-Type"] = "application/json";
-        }
+    if (!hasCacheControl) {
+        headers["Cache-Control"] = "no-cache";
     }
 
     const token = getAccessToken();
@@ -96,24 +105,38 @@ function buildRequestInit(
         headers["Authorization"] = `Bearer ${token}`;
     }
 
-    baseConfig.headers = headers;
-
     if (method === "POST") {
-        if (options?.isFormData === true) {
-            if (options.body !== undefined) {
-                baseConfig.body = options.body;
+        const hasContentType = Object.keys(headers).some(
+            (key) => key.toLowerCase() === "content-type"
+        );
+
+        if (options.isFormData) {
+            if (!hasContentType) {
+                // Leave browser to set boundary headers automatically for FormData
+                delete headers["Content-Type"];
             }
-        } else if (options && options.body !== undefined) {
-            baseConfig.body = JSON.stringify(options.body);
+            if (options.body !== undefined) {
+                requestInit.body = options.body as BodyInit;
+            }
+        } else {
+            if (!hasContentType) {
+                headers["Content-Type"] = "application/json";
+            }
+            if (options.body !== undefined) {
+                requestInit.body = JSON.stringify(options.body);
+            }
         }
     }
 
-    return baseConfig;
+    requestInit.headers = headers;
+
+    return requestInit;
 }
 
 async function apiProviderGet(url: string, config?: RequestInit): Promise<Response> {
+    const requestInit = buildRequestInit("GET", config);
+
     try {
-        const requestInit = buildRequestInit("GET", config);
         return await executeWithAuth(resolveApiUrl(url), requestInit, {
             throwOnError: true,
         });
@@ -125,15 +148,20 @@ async function apiProviderGet(url: string, config?: RequestInit): Promise<Respon
 
 async function apiProviderPost(
     url: string,
-    postData?: any,
+    postData?: unknown,
     isFormData?: boolean,
     config?: RequestInit
 ): Promise<Response> {
-    try {
-        const requestInit = buildRequestInit("POST", config, {
+    const requestInit = buildRequestInit(
+        "POST",
+        config,
+        {
             isFormData,
             body: postData,
-        });
+        }
+    );
+
+    try {
         return await executeWithAuth(resolveApiUrl(url), requestInit, {
             throwOnError: false,
         });
@@ -144,8 +172,9 @@ async function apiProviderPost(
 }
 
 async function apiProviderDelete(url: string, config?: RequestInit): Promise<Response> {
+    const requestInit = buildRequestInit("DELETE", config);
+
     try {
-        const requestInit = buildRequestInit("DELETE", config);
         return await executeWithAuth(resolveApiUrl(url), requestInit, {
             throwOnError: false,
         });
@@ -155,24 +184,34 @@ async function apiProviderDelete(url: string, config?: RequestInit): Promise<Res
     }
 }
 
-const exportApiProvider = {
+const ApiProvider = {
     apiProviderGet,
     apiProviderPost,
     apiProviderDelete,
 };
 
-export default exportApiProvider;
+export default ApiProvider;
+export { apiProviderGet, apiProviderPost, apiProviderDelete };
 
 // 通用响应解包工具：后端统一 {status, data, ...extra}
-export interface ApiEnvelope<T = any> {
+export interface ApiEnvelope<T = unknown> {
     status: number;
     data?: T;
-    [k: string]: any;
+    [k: string]: unknown;
 }
-export function unwrap<T = any>(raw: any): T {
+
+export function unwrap<T = unknown>(raw: unknown): T {
     if (raw && typeof raw === "object" && "status" in raw) {
-        if (raw.status !== 0) throw new Error(raw.message || `api status ${raw.status}`);
-        if ("data" in raw) return raw.data as T;
+        const envelope = raw as ApiEnvelope<T> & { message?: string };
+
+        if (envelope.status !== 0) {
+            throw new Error(envelope.message ?? `api status ${envelope.status}`);
+        }
+
+        if ("data" in envelope) {
+            return envelope.data as T;
+        }
     }
+
     return raw as T; // 兼容旧接口直接返回结构
 }
