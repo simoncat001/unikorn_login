@@ -338,3 +338,39 @@ def get_development_data(
         utils.template_source_type(data_generate_method, template_type),
     )
     return json_data, post_data[constants.MGID_CUSTOM_FIELD_TITLE], upload_error
+
+
+def rebuild_data_content_for_display(
+    db: Session, template_id: str, json_data: dict
+) -> dict:
+    """
+    补全老数据的 data_content，保证能覆盖 origin_post_data 中的所有字段。
+
+    不修改原表数据，只在响应里返回补全后的结构。
+    """
+
+    origin_post = json_data.get("origin_post_data")
+    if not isinstance(origin_post, dict):
+        return json_data
+
+    template = template_crud.get_template(db, template_id)
+    if not template or not template.json_schema:
+        return json_data
+
+    word_order = _merge_word_order_with_payload(
+        template.json_schema.get("word_order") or [], origin_post
+    )
+
+    data_content: List[dict] = []
+    try:
+        get_development_data_rec(origin_post, word_order, data_content)
+    except Exception:
+        return json_data
+
+    filled = deepcopy(json_data)
+    filled["data_content"] = data_content
+    # 如果原始标题缺失，沿用首字段内容作为标题
+    if data_content and data_content[0].get("content") and not filled.get("title"):
+        filled["title"] = data_content[0].get("content")
+
+    return filled
