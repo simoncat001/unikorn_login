@@ -294,12 +294,21 @@ def _merge_word_order_with_template(primary: list, secondary: list) -> list:
                     target["element_type"].get("order") or [],
                     supplement["element_type"].get("order") or [],
                 )
+            elif target.get("element_type") and supplement.get("element_type"):
+                for meta_key in ("type", "unit", "description", "format"):
+                    if meta_key not in target["element_type"] and meta_key in supplement["element_type"]:
+                        target["element_type"][meta_key] = supplement["element_type"].get(meta_key)
         elif target.get("type") == "object":
             target["order"] = _merge_word_order_with_template(
                 target.get("order") or [], supplement.get("order") or []
             )
         elif not target.get("type") and supplement.get("type"):
             target["type"] = supplement.get("type")
+
+        # 补齐基础元数据（如单位、必填等），避免 payload 推断缺少模板信息
+        for meta_key in ("unit", "required", "description", "format"):
+            if meta_key not in target and meta_key in supplement:
+                target[meta_key] = supplement.get(meta_key)
 
     for supplement in secondary:
         title = supplement.get("title")
@@ -372,8 +381,11 @@ def get_development_data(
     upload_error = None
     template = template_crud.get_template(db, template_id)
     template_json_schema = template.json_schema
-    word_oder = _merge_word_order_with_payload(
-        template_json_schema.get("word_order") or [], post_data
+
+    # 先用实际 payload 推断一份完整的 word_order，再用模板信息补全类型/单位等
+    payload_word_order = _infer_word_order_from_payload(post_data)
+    word_oder = _merge_word_order_with_template(
+        payload_word_order, template_json_schema.get("word_order") or []
     )
     data_generate_method = template_json_schema["data_generate_method"]
     template_type = template_json_schema["template_type"]
