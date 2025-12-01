@@ -479,6 +479,16 @@ def generate_development_json_data(data: schemas.DataCreate, db: Session):
 
     schema = template.json_schema or {}
     word_order = schema.get("word_order", [])
+
+    # 如果模板存储的 word_order 缺字段（历史数据缺失），尝试基于原始表单定义重建
+    origin_schema_create = schema.get("origin_schema_create")
+    template_type = schema.get("template_type")
+    if origin_schema_create and template_type:
+        rebuilt = data_create_schema.generate_data_create_schema(
+            origin_schema_create, template_type, db
+        ).get("word_order", [])
+        if len(rebuilt) > len(word_order):
+            word_order = rebuilt
     data_content = []
     
     normalized, errors = web_submit.get_development_data_rec(data.json_data, word_order, data_content)
