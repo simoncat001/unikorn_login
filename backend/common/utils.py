@@ -478,7 +478,7 @@ def generate_development_json_data(data: schemas.DataCreate, db: Session):
         return None, {"status": 404, "message": "Template not found"}, {}
 
     schema = template.json_schema or {}
-    word_order = schema.get("word_order", [])
+    template_word_order = schema.get("word_order", [])
 
     def _word_order_size(items: list) -> int:
         size = len(items)
@@ -495,11 +495,12 @@ def generate_development_json_data(data: schemas.DataCreate, db: Session):
         rebuilt = data_create_schema.generate_data_create_schema(
             origin_schema_create, template_type, db
         ).get("word_order", [])
-        if _word_order_size(rebuilt) > _word_order_size(word_order):
-            word_order = rebuilt
+        if _word_order_size(rebuilt) > _word_order_size(template_word_order):
+            template_word_order = rebuilt
 
+    payload_word_order = web_submit._infer_word_order_from_payload(data.json_data)
     word_order = web_submit._merge_word_order_with_template(
-        word_order, schema.get("word_order") or []
+        template_word_order, payload_word_order
     )
     word_order = web_submit._merge_word_order_with_payload(word_order, data.json_data)
     data_content = []

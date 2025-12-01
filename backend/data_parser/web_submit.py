@@ -382,11 +382,11 @@ def get_development_data(
     template = template_crud.get_template(db, template_id)
     template_json_schema = template.json_schema
 
-    # 先用实际 payload 推断一份完整的 word_order，再用模板信息补全类型/单位等
+    # 先以模板的顺序为主，再用实际 payload 推断的字段补齐缺失项，最后用 payload 再次兜底，确保所有提交字段都被记录
+    template_word_order = template_json_schema.get("word_order") or []
     payload_word_order = _infer_word_order_from_payload(post_data)
-    word_oder = _merge_word_order_with_template(
-        payload_word_order, template_json_schema.get("word_order") or []
-    )
+    word_oder = _merge_word_order_with_template(template_word_order, payload_word_order)
+    word_oder = _merge_word_order_with_payload(word_oder, post_data)
     data_generate_method = template_json_schema["data_generate_method"]
     template_type = template_json_schema["template_type"]
     try:
@@ -431,7 +431,7 @@ def rebuild_data_content_for_display(
 
     template_word_order = template.json_schema.get("word_order") or []
     word_order = _merge_word_order_with_template(
-        json_data.get("word_order") or [], template_word_order
+        template_word_order, json_data.get("word_order") or []
     )
 
     word_order = _merge_word_order_with_payload(word_order, origin_post)
