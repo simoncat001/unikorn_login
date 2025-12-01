@@ -1,7 +1,9 @@
 from urllib.request import urlopen
 from urllib.parse import unquote
 import asyncio
-import re,json
+import re, json
+from copy import deepcopy
+from typing import Dict, List
 from database import template_crud
 from common import object_store_service, utils, constants, error, status
 from sqlalchemy.orm import Session
@@ -54,7 +56,14 @@ def get_single_word(post_data, single_word_obj: dict):
 def get_array(post_data, array_obj: dict):
     array_title = array_obj["title"]
     array_type = array_obj["type"]
-    array_element_type = array_obj["order"][0]
+    array_order = array_obj.get("order") or []
+    array_element_type = array_order[0] if array_order else array_obj.get("element_type")
+    if array_element_type is None:
+        inferred = _infer_word_order_from_payload({array_title: post_data})
+        if inferred:
+            array_element_type = inferred[0].get("element_type")
+    if array_element_type is None:
+        array_element_type = {"title": array_title, "type": "string"}
     array_content = []
     for i, item in enumerate(post_data):
         if array_element_type["type"] == "array":
@@ -154,29 +163,101 @@ def call_validator(name, value):
     return func(value)
 
 
+def _infer_word_order_from_payload(payload) -> List[dict]:
+    """
+    当模板缺少子级的 word_order 定义时，根据提交的 payload 猜测层级结构，
+    以保证至少能把数据完整地填充到 data_content。
+    """
+
+    def _infer_type(v):
+        if isinstance(v, dict):
+            return "object"
+        if isinstance(v, list):
+            return "array"
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            return "number"
+        # 简化处理：布尔、其他都按字符串
+        return "string"
+
+    inferred = []
+    if not isinstance(payload, dict):
+        return inferred
+
+    for title, value in payload.items():
+        data_type = _infer_type(value)
+        node = {"title": title, "type": data_type}
+        if data_type == "object":
+            order = _infer_word_order_from_payload(value)
+            if order:
+                node["order"] = order
+        elif data_type == "array":
+            element_type = {"title": title, "type": "string"}
+            if isinstance(value, list) and value:
+                element_data_type = _infer_type(value[0])
+                element_type["type"] = element_data_type
+                if element_data_type == "object":
+                    order = _infer_word_order_from_payload(value[0])
+                    if order:
+                        element_type["order"] = order
+            node["element_type"] = element_type
+        inferred.append(node)
+
+    return inferred
+
+
+def _merge_word_order_with_payload(word_order: list, payload: dict) -> list:
+    """填补缺失的 word_order 节点，尽可能让展示字段覆盖整个 payload。
+
+    - 维持原有顺序和定义；
+    - 缺失的 title 会追加；
+    - 对 object/array 递归合并子级/元素定义。
+    """
+
+    if not isinstance(word_order, list):
+        word_order = []
+
+    merged = deepcopy(word_order)
+    inferred = _infer_word_order_from_payload(payload)
+    by_title = {item.get("title"): item for item in merged if item.get("title")}
+
+    for node in inferred:
+        title = node.get("title")
+        if not title:
+            continue
+
+        existing = by_title.get(title)
+        if existing is None:
+            merged.append(node)
+            by_title[title] = node
+            existing = node
+
+        node_type = node.get("type")
+        if node_type == "object":
+            existing_order = existing.get("order")
+            payload_child = payload.get(title, {}) if isinstance(payload, dict) else {}
+            if not existing_order:
+                existing["order"] = node.get("order") or []
+            else:
+                existing["order"] = _merge_word_order_with_payload(
+                    existing_order, payload_child
+                )
+        elif node_type == "array":
+            payload_child = payload.get(title) if isinstance(payload, dict) else None
+            existing_element = existing.get("element_type")
+            node_element = node.get("element_type")
+            if not existing_element:
+                existing["element_type"] = node_element
+            elif existing_element.get("type") == "object" and node_element:
+                if isinstance(payload_child, list) and payload_child:
+                    existing_element["order"] = _merge_word_order_with_payload(
+                        existing_element.get("order") or [], payload_child[0]
+                    )
+
+    return merged
+
+
 def get_development_data_rec(post_data: dict, word_order: list, data_content_out: list):
-    # for obj in word_order:
-    #     data_type = obj["type"]
-    #     title = obj["title"]
-    #     if title == constants.MGID_CUSTOM_FIELD_TITLE:
-    #         continue
-    #     if title in post_data:
-    #         if data_type == "array":
-    #             array = get_array(post_data[title], obj)
-    #             data_content_out.append(array)
-    #         elif data_type == "object":
-    #             object_ = get_object(post_data[title], obj)
-    #             data_content_out.append(object_)
-    #         else:
-    #             single_word = get_single_word(post_data[title], obj)
-    #             if obj["type"] == "file" or obj["type"] == "image":
-    #                 file_name = single_word["content"]["name"]
-    #                 file_sha256 = single_word["content"]["sha256"]
-    #                 post_data[title] = ":".join(["file", file_name, file_sha256])
-    #             data_content_out.append(single_word)
     errors: List[Dict[str, str]] = []
-    # post_data = json.loads(post_data)  # 不修改原始 post_data
-    # print(post_data)
     post_data = safe_json_loads(post_data)
     normalized = post_data
     for obj in word_order:
@@ -194,26 +275,31 @@ def get_development_data_rec(post_data: dict, word_order: list, data_content_out
                 errors.append({"field": title, "error": "required field missing"})
             continue
         value = post_data[title]
-        
-        data_type = obj["type"]
-        title = obj["title"]
-        if title == constants.MGID_CUSTOM_FIELD_TITLE:
-            continue
-        if title in post_data:
-            if data_type == "array":
-                array = get_array(post_data[title], obj)
-                data_content_out.append(array)
-            elif data_type == "object":
-                object_ = get_object(post_data[title], obj)
-                data_content_out.append(object_)
-            else:
-                single_word = get_single_word(post_data[title], obj)
-                if obj["type"] == "file" or obj["type"] == "image":
-                    file_name = single_word["content"]["name"]
-                    file_sha256 = single_word["content"]["sha256"]
-                    post_data[title] = ":".join(["file", file_name, file_sha256])
-                data_content_out.append(single_word)
 
+        data_type = obj["type"]
+        if data_type == "array":
+            # 某些老模板缺少 element_type，尝试从实际 payload 推断
+            if not obj.get("element_type") and isinstance(value, list):
+                inferred = _infer_word_order_from_payload({title: value})
+                if inferred:
+                    obj["element_type"] = inferred[0].get("element_type")
+
+            array = get_array(post_data[title], obj)
+            data_content_out.append(array)
+        elif data_type == "object":
+            # 老模板的 object 可能没有子级 order，尝试从 payload 推断
+            if not obj.get("order") and isinstance(value, dict):
+                obj["order"] = _infer_word_order_from_payload(value)
+
+            object_ = get_object(post_data[title], obj)
+            data_content_out.append(object_)
+        else:
+            single_word = get_single_word(post_data[title], obj)
+            if obj["type"] == "file" or obj["type"] == "image":
+                file_name = single_word["content"]["name"]
+                file_sha256 = single_word["content"]["sha256"]
+                post_data[title] = ":".join(["file", file_name, file_sha256])
+            data_content_out.append(single_word)
 
     return normalized, errors
 
@@ -227,7 +313,9 @@ def get_development_data(
     upload_error = None
     template = template_crud.get_template(db, template_id)
     template_json_schema = template.json_schema
-    word_oder = template_json_schema["word_order"]
+    word_oder = _merge_word_order_with_payload(
+        template_json_schema.get("word_order") or [], post_data
+    )
     data_generate_method = template_json_schema["data_generate_method"]
     template_type = template_json_schema["template_type"]
     try:
