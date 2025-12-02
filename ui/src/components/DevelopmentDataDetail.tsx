@@ -75,6 +75,7 @@ const DevDataDetailComponent: React.FC<{ id: string; publicPage: boolean }> = ({
   const classes = useStyles();
   const fontClasses = Common.fontStyles();
   const history = useHistory();
+  const btnClasses = Common.buttonStyles();
   useEffect(() => {
     void (async () => {
       try {
@@ -215,6 +216,18 @@ const DevDataDetailComponent: React.FC<{ id: string; publicPage: boolean }> = ({
         itemType={"data"}
         content={<ContentObject content={devJsonData.data_content} />}
       />
+      {!publicPage ? (
+        <Box display="flex" width="688px" justifyContent="flex-end">
+          <Button
+            className={btnClasses.SecondarySmallIcon}
+            startIcon={Icon.editIcon}
+            disableRipple
+            onClick={() => history.push(`${DEVELOPMENT_DATA_EDIT_PATH}/${id}`)}
+          >
+            编辑数据
+          </Button>
+        </Box>
+      ) : null}
     </Box>
   );
 };
