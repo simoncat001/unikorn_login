@@ -97,11 +97,14 @@ const ContentFile: React.FC<{ file: UserFile }> = ({ file }) => {
 };
 
 const ContentString: React.FC<{
-  content: string;
+  content: string | number | null;
   isURL?: boolean;
 }> = ({ content, isURL = false }) => {
   const classes = useStyles();
   const fontClasses = Common.fontStyles();
+
+  const contentStr =
+    content === null || content === undefined ? "" : String(content);
 
   return (
     <Box display="flex" flexGrow={1} p={2} className={classes.contentBlock}>
@@ -112,12 +115,12 @@ const ContentString: React.FC<{
         {isURL ? (
           <Link
             className={classes.link}
-            href={MGID_DETAIL_PATH + "/" + content}
+            href={MGID_DETAIL_PATH + "/" + contentStr}
           >
-            {typeof content === "string" ? content : String(content)}
+            {contentStr}
           </Link>
         ) : (
-          typeof content === "string" ? content : String(content)
+          contentStr
         )}
       </Typography>
     </Box>

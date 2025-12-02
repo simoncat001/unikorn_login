@@ -164,10 +164,10 @@ const EditableDataContent: React.FC<{
                 <EditableDataContent
                   item={child}
                   onChange={(updated) => {
-                    const next = Array.isArray(item.content)
-                      ? [...item.content]
+                    const next: DataContent[] = Array.isArray(item.content)
+                      ? [...(item.content as DataContent[])]
                       : [];
-                    (next as DataContent[])[idx] = updated;
+                    next[idx] = updated;
                     onChange({ ...item, content: next });
                   }}
                 />
