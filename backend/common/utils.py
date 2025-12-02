@@ -190,6 +190,35 @@ def update_data_metadata(data: dict, old_data: dict, current_user: str):
     return data
 
 
+def apply_data_content_to_payload(data_content: list, payload: dict | None = None):
+    def _value_from_item(item):
+        content = item.get("content")
+        item_type = item.get("type")
+        if item_type == "object":
+            nested = {}
+            for child in content or []:
+                if isinstance(child, dict) and child.get("title"):
+                    nested[child["title"]] = _value_from_item(child)
+            return nested
+        if item_type == "array":
+            if isinstance(content, list):
+                converted = []
+                for child in content:
+                    if isinstance(child, dict) and child.get("title"):
+                        converted.append(_value_from_item(child))
+                    else:
+                        converted.append(child)
+                return converted
+            return []
+        return content
+
+    payload = payload.copy() if isinstance(payload, dict) else {}
+    for item in data_content or []:
+        if isinstance(item, dict) and item.get("title"):
+            payload[item["title"]] = _value_from_item(item)
+    return payload
+
+
 def initialize_MGID_apply_metadata(data: dict, current_user: str, db: Session):
     data["MGID_submitter"] = current_user
     data["create_timestamp"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

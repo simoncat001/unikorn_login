@@ -21,7 +21,14 @@ export type UserFile = {
 export type DataContent = {
   type: string;
   title: string;
-  content: string | DataContent[] | string[] | NumberRange | UserFile;
+  content:
+    | string
+    | number
+    | DataContent[]
+    | (string | number)[]
+    | NumberRange
+    | UserFile
+    | null;
   element_type?: ElementType;
   unit?: string;
 };
@@ -257,6 +264,24 @@ const updateDevelopmentData = async (
   }
 };
 
+const updateDataContent = async (
+  id: string,
+  dataContent: DataContent[],
+  title?: string
+): Promise<number> => {
+  try {
+    const response = await ApiProvider.apiProviderPost(
+      "/api/dev_data_content/".concat(id),
+      { data_content: dataContent, title }
+    );
+    const responseData = await response.json();
+    return responseData["status"] ?? responseData.status;
+  } catch (e) {
+    console.error(e);
+    throw e;
+  }
+};
+
 const applyPublished = async (id: string): Promise<number> => {
   try {
     let response = await ApiProvider.apiProviderPost(
@@ -482,10 +507,11 @@ const developmentData = {
   deleteData,
   getDevData,
   updateDevelopmentData,
+  updateDataContent,
   applyPublished,
   uploadFile, // 添加文件上传方法
   deleteFile,
 };
 
 export default developmentData;
-export { deleteFile };
+export { deleteFile, updateDataContent };

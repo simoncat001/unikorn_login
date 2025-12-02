@@ -312,6 +312,34 @@ def update_development_data(
         return {"status": status.API_OK}
 
 
+@router.post("/api/dev_data_content/{object_id}")
+def update_dev_data_content(
+    object_id: str,
+    data: schemas.DataContentUpdate,
+    db: Session = Depends(db.get_db),
+    current_user: models.User = Depends(auth.get_current_active_user),
+):
+    dev_data = development_data_crud.get_dev_data(db, object_id)
+    if dev_data is None:
+        raise HTTPException(status_code=404, detail="development data not found")
+
+    json_data = dev_data.json_data.copy()
+    json_data["data_content"] = data.data_content
+    json_data["origin_post_data"] = utils.apply_data_content_to_payload(
+        data.data_content, json_data.get("origin_post_data")
+    )
+    if data.title:
+        json_data["title"] = data.title
+
+    json_data = utils.update_data_metadata(
+        json_data, dev_data.json_data, current_user.user_name
+    )
+    development_data_crud.update_development_data(
+        json_data, dev_data.template_id, db, object_id
+    )
+    return {"status": status.API_OK, "data": {"id": object_id}}
+
+
 @router.post("/api/development_data/sample_search")
 def get_sample_list(
     data: schemas.SampleDataQuery,

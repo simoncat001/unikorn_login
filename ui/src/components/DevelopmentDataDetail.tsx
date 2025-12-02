@@ -126,13 +126,6 @@ const DevDataDetailComponent: React.FC<{ id: string; publicPage: boolean }> = ({
       </Box>
       {!publicPage ? (
         <Box display="flex" justifyContent="flex-end">
-          <Box marginRight="10px">
-            <EditButton
-              review_status={devJsonData.review_status}
-              EDIT_PATH={DEVELOPMENT_DATA_EDIT_PATH + "/" + id}
-              type={"data"}
-            />
-          </Box>
           <Box>
             <PublishedButton
               review_status={devJsonData.review_status}
@@ -217,15 +210,12 @@ const DevDataDetailComponent: React.FC<{ id: string; publicPage: boolean }> = ({
         content={<ContentObject content={devJsonData.data_content} />}
       />
       {!publicPage ? (
-        <Box display="flex" width="688px" justifyContent="flex-end">
-          <Button
-            className={btnClasses.SecondarySmallIcon}
-            startIcon={Icon.editIcon}
-            disableRipple
-            onClick={() => history.push(`${DEVELOPMENT_DATA_EDIT_PATH}/${id}`)}
-          >
-            编辑数据
-          </Button>
+        <Box display="flex" justifyContent="flex-end" mt={2}>
+          <EditButton
+            review_status={devJsonData.review_status}
+            EDIT_PATH={DEVELOPMENT_DATA_EDIT_PATH + "/" + id}
+            type={"data"}
+          />
         </Box>
       ) : null}
     </Box>
