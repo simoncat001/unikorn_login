@@ -60,6 +60,11 @@ class DataCreate(BaseModel):
     review_status: str
 
 
+class DataContentUpdate(BaseModel):
+    data_content: list
+    title: str | None = None
+
+
 class SampleDataQuery(BaseModel):
     template_id: str
     template_name: str
