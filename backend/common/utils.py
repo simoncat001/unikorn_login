@@ -190,6 +190,35 @@ def update_data_metadata(data: dict, old_data: dict, current_user: str):
     return data
 
 
+def apply_data_content_to_payload(data_content: list, payload: dict | None = None):
+    def _value_from_item(item):
+        content = item.get("content")
+        item_type = item.get("type")
+        if item_type == "object":
+            nested = {}
+            for child in content or []:
+                if isinstance(child, dict) and child.get("title"):
+                    nested[child["title"]] = _value_from_item(child)
+            return nested
+        if item_type == "array":
+            if isinstance(content, list):
+                converted = []
+                for child in content:
+                    if isinstance(child, dict) and child.get("title"):
+                        converted.append(_value_from_item(child))
+                    else:
+                        converted.append(child)
+                return converted
+            return []
+        return content
+
+    payload = payload.copy() if isinstance(payload, dict) else {}
+    for item in data_content or []:
+        if isinstance(item, dict) and item.get("title"):
+            payload[item["title"]] = _value_from_item(item)
+    return payload
+
+
 def initialize_MGID_apply_metadata(data: dict, current_user: str, db: Session):
     data["MGID_submitter"] = current_user
     data["create_timestamp"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -478,12 +507,38 @@ def generate_development_json_data(data: schemas.DataCreate, db: Session):
         return None, {"status": 404, "message": "Template not found"}, {}
 
     schema = template.json_schema or {}
-    word_order = schema.get("word_order", [])
+    template_word_order = schema.get("word_order", [])
+
+    def _word_order_size(items: list) -> int:
+        size = len(items)
+        for item in items:
+            order = item.get("order", [])
+            if isinstance(order, list) and order:
+                size += _word_order_size(order)
+        return size
+
+    # 如果模板存储的 word_order 缺字段（历史数据缺失），尝试基于原始表单定义重建
+    origin_schema_create = schema.get("origin_schema_create")
+    template_type = schema.get("template_type")
+    if origin_schema_create and template_type:
+        rebuilt = data_create_schema.generate_data_create_schema(
+            origin_schema_create, template_type, db
+        ).get("word_order", [])
+        if _word_order_size(rebuilt) > _word_order_size(template_word_order):
+            template_word_order = rebuilt
+
+    payload_word_order = web_submit._infer_word_order_from_payload(data.json_data)
+    word_order = web_submit._merge_word_order_with_template(
+        template_word_order, payload_word_order
+    )
+    word_order = web_submit._merge_word_order_with_payload(word_order, data.json_data)
     data_content = []
     
     normalized, errors = web_submit.get_development_data_rec(data.json_data, word_order, data_content)
     if errors:
         return None, {"status": 422, "message": "invalid payload", "errors": errors}, {}
+
+    now = datetime.datetime.now()
 
     json_data = {
         "template_name": template.name,
@@ -492,7 +547,10 @@ def generate_development_json_data(data: schemas.DataCreate, db: Session):
         "template_type": schema.get("template_type"),
         "data_content": data_content,
         "origin_post_data": normalized,  # 写规范化后的（含文件引用），非原始
-        "title": normalized.get("title") or template.name,
+        "title": web_submit.resolve_title_from_payload(
+            normalized, template.name, now=now
+        ),
+        "word_order": word_order,
         "citation_template": "{}，{}[{}].".format(
             schema.get("source_standard_number", ""),
             template.name,

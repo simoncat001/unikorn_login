@@ -75,6 +75,7 @@ const DevDataDetailComponent: React.FC<{ id: string; publicPage: boolean }> = ({
   const classes = useStyles();
   const fontClasses = Common.fontStyles();
   const history = useHistory();
+  const btnClasses = Common.buttonStyles();
   useEffect(() => {
     void (async () => {
       try {
@@ -125,13 +126,6 @@ const DevDataDetailComponent: React.FC<{ id: string; publicPage: boolean }> = ({
       </Box>
       {!publicPage ? (
         <Box display="flex" justifyContent="flex-end">
-          <Box marginRight="10px">
-            <EditButton
-              review_status={devJsonData.review_status}
-              EDIT_PATH={DEVELOPMENT_DATA_EDIT_PATH + "/" + id}
-              type={"data"}
-            />
-          </Box>
           <Box>
             <PublishedButton
               review_status={devJsonData.review_status}
@@ -215,6 +209,15 @@ const DevDataDetailComponent: React.FC<{ id: string; publicPage: boolean }> = ({
         itemType={"data"}
         content={<ContentObject content={devJsonData.data_content} />}
       />
+      {!publicPage ? (
+        <Box display="flex" justifyContent="flex-end" mt={2}>
+          <EditButton
+            review_status={devJsonData.review_status}
+            EDIT_PATH={DEVELOPMENT_DATA_EDIT_PATH + "/" + id}
+            type={"data"}
+          />
+        </Box>
+      ) : null}
     </Box>
   );
 };
