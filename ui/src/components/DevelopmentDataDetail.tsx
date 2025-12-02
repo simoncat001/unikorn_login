@@ -75,6 +75,7 @@ const DevDataDetailComponent: React.FC<{ id: string; publicPage: boolean }> = ({
   const classes = useStyles();
   const fontClasses = Common.fontStyles();
   const history = useHistory();
+  const btnClasses = Common.buttonStyles();
   useEffect(() => {
     void (async () => {
       try {
