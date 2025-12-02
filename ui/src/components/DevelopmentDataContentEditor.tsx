@@ -33,7 +33,9 @@ const ArrayEditor: React.FC<{
   onChange: (updated: DataContent) => void;
 }> = ({ item, onChange }) => {
   const btnClasses = Common.buttonStyles();
-  const content = Array.isArray(item.content) ? item.content : [];
+  const content = Array.isArray(item.content)
+    ? item.content
+    : ([] as (string | number | DataContent)[]);
   const isObjectArray =
     content.length > 0 &&
     typeof content[0] === "object" &&
@@ -41,16 +43,17 @@ const ArrayEditor: React.FC<{
     (content[0] as any).title;
 
   if (isObjectArray) {
+    const objectContent = content as DataContent[];
     return (
       <Box display="flex" flexDirection="column" width="100%" mt={1}>
-        {(content as DataContent[]).map((child, idx) => (
+        {objectContent.map((child, idx) => (
           <Box key={`${child.title}-${idx}`} ml={2}>
             <EditableDataContent
               item={child}
               onChange={(updated) => {
-                const next = [...content] as DataContent[];
+                const next = [...objectContent];
                 next[idx] = updated;
-                onChange({ ...item, content: next });
+                onChange({ ...item, content: next as DataContent[] });
               }}
             />
           </Box>
@@ -59,9 +62,10 @@ const ArrayEditor: React.FC<{
     );
   }
 
+  const primitiveContent = content as (string | number)[];
   return (
     <Box display="flex" flexDirection="column" width="100%" mt={1}>
-      {content.map((value, idx) => (
+      {primitiveContent.map((value, idx) => (
         <Box display="flex" alignItems="center" key={`${item.title}-${idx}`}>
           <TextField
             fullWidth
@@ -70,17 +74,17 @@ const ArrayEditor: React.FC<{
             margin="dense"
             value={value as any}
             onChange={(e) => {
-              const next = [...content];
+              const next = [...primitiveContent];
               next[idx] = e.target.value;
-              onChange({ ...item, content: next });
+              onChange({ ...item, content: next as (string | number)[] });
             }}
           />
           <Button
             className={btnClasses.SecondarySmall}
             onClick={() => {
-              const next = [...content];
+              const next = [...primitiveContent];
               next.splice(idx, 1);
-              onChange({ ...item, content: next });
+              onChange({ ...item, content: next as (string | number)[] });
             }}
           >
             删除
@@ -90,7 +94,12 @@ const ArrayEditor: React.FC<{
       <Box>
         <Button
           className={btnClasses.SecondarySmall}
-          onClick={() => onChange({ ...item, content: [...content, ""] })}
+          onClick={() =>
+            onChange({
+              ...item,
+              content: [...primitiveContent, ""] as (string | number)[],
+            })
+          }
         >
           添加条目
         </Button>

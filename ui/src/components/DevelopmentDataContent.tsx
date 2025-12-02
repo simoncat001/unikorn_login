@@ -42,8 +42,8 @@ function getEnumText(content: string[]) {
   return content.join(", ");
 }
 
-function getNumber(content: string, unit?: string) {
-  return content + unit;
+function getNumber(content: string | number, unit?: string) {
+  return String(content) + (unit ?? "");
 }
 
 const ContentTitle: React.FC<{
@@ -127,7 +127,7 @@ const ContentString: React.FC<{
 const ContentArray: React.FC<{
   type: string;
   title: string;
-  contentList: DataContent[] | string[];
+  contentList: (DataContent | string | number)[];
   unit?: string;
 }> = ({ type, title, contentList, unit }) => {
   return (
@@ -144,38 +144,50 @@ const ContentArray: React.FC<{
 
 const ContentItem: React.FC<{
   type: string;
-  content: string | DataContent[] | string[] | NumberRange | UserFile;
+  content: DataContent["content"];
   element_type?: ElementType;
   unit?: string;
 }> = ({ type, content, element_type, unit }) => {
   switch (type) {
     case "object":
-      return <ContentObject content={content as DataContent[]} />;
+      return <ContentObject content={(content as DataContent[]) || []} />;
     case "array":
       return (
         <ContentArray
           type={element_type?.type || ""}
           title={element_type?.title || ""}
-          contentList={content as DataContent[]}
+          contentList={Array.isArray(content) ? (content as any[]) : []}
           unit={element_type?.unit || ""}
         />
       );
     case "enum_text":
-      return <ContentString content={getEnumText(content as string[])} />;
+      return <ContentString content={getEnumText((content as string[]) || [])} />;
     case "number_range":
       return (
-        <ContentString content={getNumberRange(content as NumberRange, unit)} />
+        <ContentString
+          content={getNumberRange(
+            (content as NumberRange) || { start: "", end: "" },
+            unit
+          )}
+        />
       );
     case "number":
-      return <ContentString content={getNumber(content as string, unit)} />;
+      return <ContentString content={getNumber(content as string | number, unit)} />;
     case "MGID":
-      return <ContentString content={content as string} isURL={true} />;
+      return <ContentString content={(content as string) || ""} isURL={true} />;
     case "string":
-      return <ContentString content={content as string} />;
+      return <ContentString content={(content as string) || ""} />;
     case "date":
-      return <ContentString content={content as string} />;
+      return <ContentString content={(content as string) || ""} />;
+    case "file":
+    case "image":
+      return (
+        <ContentFile
+          file={(content as UserFile) || { name: "", sha256: "" }}
+        />
+      );
     default:
-      return <ContentFile file={content as UserFile} />;
+      return <ContentString content={(content as string | number | null) ?? ""} />;
   }
 };
 
