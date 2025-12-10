@@ -17,6 +17,8 @@ import AdminWordDetailView from "../views/admin/AdminWordDetailView.vue";
 import AdminTemplateDetailView from "../views/admin/AdminTemplateDetailView.vue";
 import AdminDataDetailView from "../views/admin/AdminDataDetailView.vue";
 import AdminMGIDDetailView from "../views/admin/AdminMGIDDetailView.vue";
+import AdminUserView from "../views/admin/AdminUserView.vue";
+import AdminUserDetailView from "../views/admin/AdminUserDetailView.vue";
 import DevelopmentCreateView from "../views/data/DevelopmentCreateView.vue";
 import DevelopmentEditView from "../views/data/DevelopmentEditView.vue";
 import DevelopmentDetailView from "../views/data/DevelopmentDetailView.vue";
@@ -41,6 +43,8 @@ const routes: Array<RouteRecordRaw> = [
   { path: `${PATHS.WORDS_DETAIL_PATH}/:id`, name: "words-detail", component: WordDetailView },
   { path: `${PATHS.WORDS_EDIT_PATH}/:id`, name: "words-edit", component: WordEditView },
   { path: `${PATHS.TEMPLATES_DETAIL_PATH}/:id`, name: "templates-detail", component: TemplateDetailView },
+  { path: PATHS.ADMIN_USER_PATH, name: "admin-user", component: AdminUserView },
+  { path: `${PATHS.ADMIN_USER_DETAIL_PATH}/:id`, name: "admin-user-detail", component: AdminUserDetailView },
   { path: `${PATHS.ADMIN_PATH}/:itemType`, name: "admin", component: AdminCollectionView },
   { path: `${PATHS.ADMIN_WORDS_DETAIL_PATH}/:id`, name: "admin-words-detail", component: AdminWordDetailView },
   {

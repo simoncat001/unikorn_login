@@ -22,6 +22,7 @@ const items = [
   { label: "应用数据上传", to: PATHS.APPLICATION_DATA_CREATE_PATH },
   { label: "创建词条", to: PATHS.WORDS_CREATE_PATH },
   { label: "MGID 申请", to: PATHS.MGID_APPLY_CREATE_PATH },
-  { label: "管理台", to: `${PATHS.ADMIN_PATH}/words` }
+  { label: "管理台", to: `${PATHS.ADMIN_PATH}/words` },
+  { label: "用户管理", to: PATHS.ADMIN_USER_PATH }
 ];
 </script>

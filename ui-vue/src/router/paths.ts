@@ -15,6 +15,7 @@ export const ADMIN_DATA_DETAIL_PATH = `${ADMIN_PATH}/data_detail`;
 export const ADMIN_MGID_PATH = `${ADMIN_PATH}/MGID`;
 export const ADMIN_MGID_DETAIL_PATH = `${ADMIN_PATH}/MGID_apply_detail`;
 export const ADMIN_USER_PATH = `${ADMIN_PATH}/user`;
+export const ADMIN_USER_DETAIL_PATH = `${ADMIN_USER_PATH}/detail`;
 export const ADMIN_COUNTRY_PATH = `${ADMIN_PATH}/country`;
 export const DOI_APPLY_PATH = "/DOI_apply";
 export const ABOUT_PATH = "/about";
@@ -55,6 +56,7 @@ export const PATHS = {
   ADMIN_MGID_PATH,
   ADMIN_MGID_DETAIL_PATH,
   ADMIN_USER_PATH,
+  ADMIN_USER_DETAIL_PATH,
   ADMIN_COUNTRY_PATH,
   DOI_APPLY_PATH,
   ABOUT_PATH,
