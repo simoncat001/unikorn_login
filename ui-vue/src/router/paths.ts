@@ -1,0 +1,81 @@
+export const HOME_PATH = "/";
+export const WORDS_CREATE_PATH = "/words/create";
+export const TEMPLATES_CREATE_PATH = "/templates/create";
+export const DEVELOPMENT_DATA_CREATE_PATH = "/development_data/create";
+export const APPLICATION_DATA_CREATE_PATH = "/application_data/create";
+export const MGID_APPLY_CREATE_PATH = "/MGID_apply/create";
+export const NOT_FOUND_PATH = "/404";
+export const ADMIN_PATH = "/admin";
+export const ADMIN_WORDS_PATH = `${ADMIN_PATH}/words`;
+export const ADMIN_WORDS_DETAIL_PATH = `${ADMIN_PATH}/word_detail`;
+export const ADMIN_TEMPLATES_PATH = `${ADMIN_PATH}/templates`;
+export const ADMIN_TEMPLATES_DETAIL_PATH = `${ADMIN_PATH}/template_detail`;
+export const ADMIN_DATA_PATH = `${ADMIN_PATH}/data`;
+export const ADMIN_DATA_DETAIL_PATH = `${ADMIN_PATH}/data_detail`;
+export const ADMIN_MGID_PATH = `${ADMIN_PATH}/MGID`;
+export const ADMIN_MGID_DETAIL_PATH = `${ADMIN_PATH}/MGID_apply_detail`;
+export const ADMIN_USER_PATH = `${ADMIN_PATH}/user`;
+export const ADMIN_USER_DETAIL_PATH = `${ADMIN_USER_PATH}/detail`;
+export const ADMIN_COUNTRY_PATH = `${ADMIN_PATH}/country`;
+export const DOI_APPLY_PATH = "/DOI_apply";
+export const ABOUT_PATH = "/about";
+export const ERROR_PATH = "/error";
+export const WORDS_PATH = "/center/words";
+export const WORDS_DETAIL_PATH = `${WORDS_PATH}/detail`;
+export const WORDS_EDIT_PATH = `${WORDS_PATH}/edit`;
+export const TEMPLATES_PATH = "/center/templates";
+export const TEMPLATES_DETAIL_PATH = `${TEMPLATES_PATH}/detail`;
+export const TEMPLATES_EDIT_PATH = `${TEMPLATES_PATH}/edit`;
+export const APPLICATION_DATA_PATH = "/center/application_data";
+export const DEVELOPMENT_DATA_PATH = "/center/development_data";
+export const MGID_APPLY_PATH = "/center/MGID_apply";
+export const MGID_DETAIL_PATH = `${MGID_APPLY_PATH}/detail`;
+export const DEVELOPMENT_DATA_DETAIL_PATH = `${DEVELOPMENT_DATA_PATH}/detail`;
+export const DEVELOPMENT_DATA_DETAIL_PUBLIC_PATH = "/development_data/public/detail";
+export const DEVELOPMENT_DATA_EDIT_PATH = `${DEVELOPMENT_DATA_PATH}/edit`;
+export const MGID_PATH = "/MGID";
+export const TEMPLATES_RECOMMEND_PATH = "/templates/recommend";
+export const DEVELOPMENT_DATA_MULYIPART_UPLOAD_PATH = "/development_data/multipart_upload";
+export const LOGIN_PATH = "/login";
+
+export const PATHS = {
+  HOME_PATH,
+  WORDS_CREATE_PATH,
+  TEMPLATES_CREATE_PATH,
+  DEVELOPMENT_DATA_CREATE_PATH,
+  APPLICATION_DATA_CREATE_PATH,
+  MGID_APPLY_CREATE_PATH,
+  NOT_FOUND_PATH,
+  ADMIN_PATH,
+  ADMIN_WORDS_PATH,
+  ADMIN_WORDS_DETAIL_PATH,
+  ADMIN_TEMPLATES_PATH,
+  ADMIN_TEMPLATES_DETAIL_PATH,
+  ADMIN_DATA_PATH,
+  ADMIN_DATA_DETAIL_PATH,
+  ADMIN_MGID_PATH,
+  ADMIN_MGID_DETAIL_PATH,
+  ADMIN_USER_PATH,
+  ADMIN_USER_DETAIL_PATH,
+  ADMIN_COUNTRY_PATH,
+  DOI_APPLY_PATH,
+  ABOUT_PATH,
+  ERROR_PATH,
+  WORDS_PATH,
+  WORDS_DETAIL_PATH,
+  WORDS_EDIT_PATH,
+  TEMPLATES_PATH,
+  TEMPLATES_DETAIL_PATH,
+  TEMPLATES_EDIT_PATH,
+  APPLICATION_DATA_PATH,
+  DEVELOPMENT_DATA_PATH,
+  MGID_APPLY_PATH,
+  MGID_DETAIL_PATH,
+  DEVELOPMENT_DATA_DETAIL_PATH,
+  DEVELOPMENT_DATA_DETAIL_PUBLIC_PATH,
+  DEVELOPMENT_DATA_EDIT_PATH,
+  MGID_PATH,
+  TEMPLATES_RECOMMEND_PATH,
+  DEVELOPMENT_DATA_MULYIPART_UPLOAD_PATH,
+  LOGIN_PATH
+};
