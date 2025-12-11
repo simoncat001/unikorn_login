@@ -39,9 +39,12 @@ function cardBorderColor(itemType: string) {
 const PreviewCard: React.FC<{
   itemType: string;
   content: JSX.Element;
-}> = ({ itemType, content }) => {
+  onEditClick?: () => void;
+  showEditButton?: boolean;
+}> = ({ itemType, content, onEditClick, showEditButton = false }) => {
   const classes = useStyles();
   const fontClasses = Common.fontStyles();
+  const btnClasses = Common.buttonStyles();
   const [expanded, setExpanded] = React.useState(false);
 
   const handleExpandClick = () => {
@@ -83,6 +86,18 @@ const PreviewCard: React.FC<{
         >
           {content}
         </CardContent>
+        {showEditButton && expanded && (
+          <CardActions style={{ justifyContent: "flex-end", padding: "8px 16px" }}>
+            <Button
+              className={btnClasses.SecondarySmallIcon}
+              startIcon={Icon.editIcon}
+              disableRipple
+              onClick={onEditClick}
+            >
+              编辑
+            </Button>
+          </CardActions>
+        )}
       </Collapse>
     </Card>
   );

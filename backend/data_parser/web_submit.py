@@ -437,6 +437,11 @@ def rebuild_data_content_for_display(
     不修改原表数据，只在响应里返回补全后的结构。
     """
 
+    # 如果已经有 data_content，直接返回，不要重新生成
+    # 这样可以保留用户编辑的数据，包括文件字段
+    if json_data.get("data_content"):
+        return json_data
+
     origin_post = json_data.get("origin_post_data")
     if not isinstance(origin_post, dict):
         return json_data

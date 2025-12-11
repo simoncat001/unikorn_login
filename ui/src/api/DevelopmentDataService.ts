@@ -2,10 +2,11 @@ import ApiProvider from "./ApiProvider";
 import { JSONSchema7 } from "json-schema";
 
 export type ElementType = {
-  title: string;
-  type: string;
-  unit: string;
-  order: ElementType[];
+  title?: string;
+  type?: string;
+  unit?: string;
+  order?: ElementType[];
+  element_type?: ElementType;
 };
 
 export type NumberRange = {
@@ -22,13 +23,13 @@ export type DataContent = {
   type: string;
   title: string;
   content:
-    | string
-    | number
-    | DataContent[]
-    | (string | number)[]
-    | NumberRange
-    | UserFile
-    | null;
+  | string
+  | number
+  | DataContent[]
+  | (string | number)[]
+  | NumberRange
+  | UserFile
+  | null;
   element_type?: ElementType;
   unit?: string;
 };
@@ -39,6 +40,7 @@ export type DevelopmentDataJSON = {
   institution: string;
   template_type: string;
   data_content: DataContent[];
+  word_order?: ElementType[];
   origin_post_data: JSONSchema7;
   author: string;
   create_timestamp: string;
@@ -311,12 +313,12 @@ const uploadFile = async (
     type: file.type,
     objectPrefix
   });
-  
+
   // 参数验证
   if (!file) {
     throw new Error('上传失败: 无效的文件对象');
   }
-  
+
   // 小文件直接使用原接口上传
   if (file.size < PART_SIZE) {
     console.log('使用小文件上传方式');
@@ -376,7 +378,7 @@ const uploadFile = async (
     let uploadedBytes = 0;
     let uploadSession: string | null = null;
     let fileUrl: string | null = null;
-    
+
     console.log('分片上传配置:', {
       partSize: PART_SIZE,
       totalParts
@@ -387,17 +389,17 @@ const uploadFile = async (
     const initFormData = new FormData();
     initFormData.append('filename', file.name);
     initFormData.append('total_parts', totalParts.toString());
-    
+
     const initResponse = await ApiProvider.apiProviderPost('/api/development_data/init_multipart', initFormData, true);
     const initResult = await initResponse.json();
-    
+
     if (!initResult.upload_session) {
       throw new Error('未能获取上传会话');
     }
-    
+
     uploadSession = initResult.upload_session;
     console.log('成功获取上传会话:', uploadSession);
-    
+
     // 上传分片
     console.log('第二步：开始上传分片，共', totalParts, '个分片');
     const uploadQueue: number[] = Array.from({ length: totalParts }, (_, i) => i + 1);
@@ -491,10 +493,10 @@ const uploadFile = async (
     throw new Error('分片上传完成但未能获取文件URL');
   } catch (error) {
     console.error('文件上传失败:', error);
-    
+
     // 格式化错误信息
     const errorMessage = `文件上传失败: ${error instanceof Error ? error.message : String(error)}`;
-    
+
     throw new Error(errorMessage);
   }
 };

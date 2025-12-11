@@ -1,262 +1,360 @@
-<template>
-  <section class="stack">
-    <header class="section-header">
-      <div>
-        <p class="eyebrow">词条</p>
-        <h2>创建词条</h2>
-        <p class="muted">录入新的词条及其解释，补充标签、来源与附件，提交审核后即可发布。</p>
-      </div>
-      <div class="actions">
-        <button class="secondary" type="button" @click="submit('draft')">保存草稿</button>
-        <button class="primary" type="button" @click="submit('submit')">提交审核</button>
-      </div>
-    </header>
-
-    <article class="section-card">
-      <div class="section-heading">
-        <h3>基础信息</h3>
-        <p class="muted">标题、别名、标签等信息将用于搜索与关联。</p>
-      </div>
-      <div class="form-grid">
-        <label>
-          标题
-          <input v-model="form.title" type="text" required placeholder="例如：联邦学习" />
-          <small class="muted">必填，简洁明了，建议 8-16 字。</small>
-        </label>
-        <label>
-          别名/缩写
-          <input v-model="form.alias" type="text" placeholder="例如：FL" />
-          <small class="muted">可选，用于检索常用简称。</small>
-        </label>
-        <label>
-          分类
-          <select v-model="form.category">
-            <option value="算法">算法</option>
-            <option value="安全">安全</option>
-            <option value="数据">数据</option>
-            <option value="基础设施">基础设施</option>
-          </select>
-        </label>
-        <label>
-          标签
-          <input v-model="form.tags" type="text" placeholder="ml, 安全, 数据" />
-          <small class="muted">以逗号分隔，至少 1 个标签。</small>
-        </label>
-        <label class="full">
-          摘要
-          <textarea v-model="form.description" rows="3" placeholder="简要说明词条背景与应用" />
-        </label>
-      </div>
-      <div class="filters" v-if="tagList.length">
-        <span class="pill" v-for="tag in tagList" :key="tag">{{ tag }}</span>
-      </div>
-    </article>
-
-    <article class="section-card">
-      <div class="section-heading">
-        <h3>释义与示例</h3>
-        <p class="muted">补充权威定义、适用场景和示例，方便审核。</p>
-      </div>
-      <div class="form-grid">
-        <label class="full">
-          权威定义
-          <textarea v-model="form.definition" rows="3" placeholder="来自标准或论文的定义" />
-        </label>
-        <label class="full">
-          应用场景
-          <textarea v-model="form.scenario" rows="3" placeholder="适用范围、业务场景或最佳实践" />
-        </label>
-        <label class="full">
-          示例与参考
-          <textarea v-model="form.example" rows="3" placeholder="示例句、参考链接或引用文献" />
-        </label>
-      </div>
-    </article>
-
-    <article class="section-card">
-      <div class="section-heading">
-        <h3>元数据</h3>
-        <p class="muted">填写责任人、来源和发布策略。</p>
-      </div>
-      <div class="form-grid">
-        <label>
-          责任人
-          <input v-model="form.owner" type="text" placeholder="知识库/研发团队" />
-        </label>
-        <label>
-          审核人
-          <input v-model="form.reviewer" type="text" placeholder="运营/法务" />
-        </label>
-        <label>
-          联系方式
-          <input v-model="form.contact" type="text" placeholder="owner@example.com" />
-        </label>
-        <label>
-          来源链接
-          <input v-model="form.source" type="url" placeholder="https://..." />
-        </label>
-      </div>
-      <div class="actions gap">
-        <label class="switch">
-          <input v-model="form.visibility" type="radio" value="internal" />
-          <span>仅内部可见</span>
-        </label>
-        <label class="switch">
-          <input v-model="form.visibility" type="radio" value="public" />
-          <span>可公开分享</span>
-        </label>
-        <label class="switch">
-          <input v-model="form.requireReview" type="checkbox" />
-          <span>需要二次审核</span>
-        </label>
-        <label class="switch">
-          <input v-model="form.sensitive" type="checkbox" />
-          <span>包含敏感信息</span>
-        </label>
-      </div>
-    </article>
-
-    <article class="section-card">
-      <div class="section-heading">
-        <h3>附件与参考</h3>
-        <p class="muted">上传相关资料，或补充额外参考。</p>
-      </div>
-      <div class="form-grid">
-        <label class="full">
-          上传附件
-          <input type="file" multiple @change="handleFiles" />
-          <small class="muted">支持 doc、pdf、图片等，文件仅示例展示。</small>
-        </label>
-        <label class="full">
-          其他参考
-          <textarea v-model="form.references" rows="2" placeholder="列出标准、白皮书或相关资料" />
-        </label>
-      </div>
-      <div class="list" v-if="form.attachments.length">
-        <div class="list-row" v-for="file in form.attachments" :key="file.name">
-          <div>
-            <p class="strong">{{ file.name }}</p>
-            <p class="muted">{{ file.size }} · {{ file.type }}</p>
-          </div>
-          <span class="badge">待上传</span>
-        </div>
-      </div>
-    </article>
-
-    <article class="section-card">
-      <div class="section-heading">
-        <h3>质量检查与预览</h3>
-        <p class="muted">提交前快速核对关键信息。</p>
-      </div>
-      <div class="grid stats">
-        <div class="stat-card">
-          <p class="eyebrow">必填项</p>
-          <h4>{{ errors.length === 0 ? '全部已完善' : `${errors.length} 项待补充` }}</h4>
-          <ul class="kv" v-if="errors.length">
-            <li v-for="err in errors" :key="err">
-              <span>待完善</span>
-              <strong>{{ err }}</strong>
-            </li>
-          </ul>
-        </div>
-        <div class="stat-card">
-          <p class="eyebrow">预览</p>
-          <div class="stack">
-            <p class="strong">{{ form.title || '未命名词条' }}</p>
-            <p class="muted">{{ form.description || '暂无摘要' }}</p>
-            <div class="filters" v-if="tagList.length">
-              <span class="badge" v-for="tag in tagList" :key="tag">{{ tag }}</span>
+﻿<template>
+  <MainAppBar />
+  <div class="word-create-container">
+    <h1 class="page-title">词汇创建</h1>
+    
+    <form class="word-form">
+      <div class="form-control">
+        <div class="form-grid">
+          <!-- 中文名称 -->
+          <div class="form-item">
+            <div class="form-row">
+              <div class="label-box">
+                <p class="label-text">
+                  <span class="required-icon">*</span>中文名称：
+                </p>
+              </div>
+              <div class="input-wrapper">
+                <input
+                  v-model="form.chinese_name"
+                  type="text"
+                  class="text-field"
+                  required
+                />
+              </div>
             </div>
-            <p class="muted">分类：{{ form.category }} · 可见性：{{ visibilityLabel }}</p>
+          </div>
+
+          <!-- 英文名称 -->
+          <div class="form-item">
+            <div class="form-row">
+              <div class="label-box">
+                <p class="label-text">
+                  <span class="required-icon">*</span>英文名称：
+                </p>
+              </div>
+              <div class="input-wrapper">
+                <input
+                  v-model="form.english_name"
+                  type="text"
+                  class="text-field"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- 缩写名 -->
+          <div class="form-item">
+            <div class="form-row">
+              <div class="label-box">
+                <p class="label-text">
+                  <span class="required-icon-placeholder"></span>缩写名：
+                </p>
+              </div>
+              <div class="input-wrapper">
+                <input
+                  v-model="form.abbr"
+                  type="text"
+                  class="text-field"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- 定义 -->
+          <div class="form-item">
+            <div class="form-row">
+              <div class="label-box">
+                <p class="label-text">
+                  <span class="required-icon">*</span>定义：
+                </p>
+              </div>
+              <div class="input-wrapper">
+                <input
+                  v-model="form.definition"
+                  type="text"
+                  class="text-field"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- 数据类型 -->
+          <div class="form-item">
+            <div class="form-row">
+              <div class="label-box">
+                <p class="label-text">
+                  <span class="required-icon">*</span>数据类型：
+                </p>
+              </div>
+              <div class="input-wrapper">
+                <select v-model="form.data_type" class="text-field select-field">
+                  <option value="string">字符串</option>
+                  <option value="number">数值</option>
+                  <option value="number_range">数值范围</option>
+                  <option value="file">文件</option>
+                  <option value="date">日期</option>
+                  <option value="enum_text">枚举项</option>
+                  <option value="image">图片</option>
+                  <option value="MGID">MGID</option>
+                  <option value="object">对象</option>
+                  <option value="array">数组</option>
+                  <option value="list"></option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 来源标准号 -->
+          <div class="form-item">
+            <div class="form-row">
+              <div class="label-box">
+                <p class="label-text">
+                  <span class="required-icon">*</span>来源标准号：
+                </p>
+              </div>
+              <div class="input-wrapper">
+                <input
+                  v-model="form.source_standard_id"
+                  type="text"
+                  class="text-field"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- 来源标准名称 -->
+          <div class="form-item">
+            <div class="form-row">
+              <div class="label-box">
+                <p class="label-text">
+                  <span class="required-icon-placeholder"></span>来源标准名称：
+                </p>
+              </div>
+              <div class="input-wrapper">
+                <input
+                  v-model="form.source_standard_name"
+                  type="text"
+                  class="text-field"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </article>
-  </section>
+
+      <!-- 按钮区域 -->
+      <div class="button-container">
+        <button type="button" class="btn-secondary" @click="saveDraft">
+          保存草稿
+        </button>
+        <button type="button" class="btn-primary" @click="submitReview">
+          提交审核
+        </button>
+      </div>
+    </form>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from "vue";
-
-type Visibility = "internal" | "public";
-
-type Attachment = {
-  name: string;
-  size: string;
-  type: string;
-};
+import { reactive } from 'vue';
+import MainAppBar from '../../components/MainAppBar.vue';
 
 const form = reactive({
-  title: "",
-  alias: "",
-  category: "算法",
-  tags: "ml, 安全",
-  description: "",
-  definition: "",
-  scenario: "",
-  example: "",
-  owner: "知识库团队",
-  reviewer: "运营同学",
-  contact: "",
-  source: "",
-  visibility: "internal" as Visibility,
-  requireReview: true,
-  sensitive: false,
-  references: "",
-  attachments: [
-    { name: "示例定义.docx", size: "256KB", type: "docx" },
-    { name: "行业标准.pdf", size: "1.2MB", type: "pdf" }
-  ] as Attachment[]
+  chinese_name: '',
+  english_name: '',
+  abbr: '',
+  definition: '',
+  data_type: 'string',
+  source_standard_id: '',
+  source_standard_name: ''
 });
 
-const tagList = computed(() =>
-  form.tags
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean)
-);
-
-const errors = computed(() => {
-  const missing: string[] = [];
-  if (!form.title.trim()) missing.push("标题");
-  if (!form.description.trim()) missing.push("摘要");
-  if (!form.definition.trim()) missing.push("权威定义");
-  if (tagList.value.length === 0) missing.push("至少 1 个标签");
-  return missing;
-});
-
-const visibilityLabel = computed(() =>
-  form.visibility === "internal" ? "内部" : "公开"
-);
-
-const handleFiles = (event: Event) => {
-  const input = event.target as HTMLInputElement;
-  const files = input.files;
-  if (!files) return;
-
-  Array.from(files).forEach((file) => {
-    form.attachments.push({
-      name: file.name,
-      size: `${(file.size / 1024).toFixed(1)}KB`,
-      type: file.type || "未知格式"
-    });
-  });
-
-  input.value = "";
+const saveDraft = () => {
+  console.log('保存草稿', form);
 };
 
-const submit = (mode: "draft" | "submit") => {
-  if (mode === "submit" && errors.value.length > 0) {
-    alert(`提交前请完善：${errors.value.join("、")}`);
-    return;
-  }
-
-  const payload = {
-    ...form,
-    tags: tagList.value,
-    status: mode === "draft" ? "草稿" : "待审核"
-  };
-
-  alert(`已${mode === "draft" ? "保存草稿" : "提交审核"}：\n${JSON.stringify(payload, null, 2)}`);
+const submitReview = () => {
+  console.log('提交审核', form);
 };
 </script>
+
+<style scoped>
+.word-create-container {
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+  flex-direction: column;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+.page-title {
+  margin-top: 94px;
+  font-size: 20px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+  line-height: 1.6;
+  letter-spacing: 0.0075em;
+}
+
+.word-form {
+  margin-top: 45px;
+  width: 600px;
+}
+
+.form-control {
+  width: 100%;
+}
+
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.form-item {
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.form-row {
+  display: flex;
+  align-items: flex-start;
+  width: 600px;
+}
+
+.label-box {
+  flex-shrink: 0;
+  width: 150px;
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 16px;
+}
+
+.label-text {
+  margin: 0;
+  margin-top: 4px;
+  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.43;
+  letter-spacing: 0.01071em;
+  text-align: right;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.required-icon {
+  color: #f44336;
+  margin-right: 4px;
+}
+
+.required-icon-placeholder {
+  display: inline-block;
+  width: 8px;
+  margin-right: 4px;
+}
+
+.input-wrapper {
+  flex: 1;
+  max-width: 434px;
+}
+
+.text-field {
+  width: 100%;
+  padding: 10.5px 14px;
+  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+  font-size: 16px;
+  line-height: 1.1876em;
+  letter-spacing: 0.00938em;
+  color: rgba(0, 0, 0, 0.87);
+  border: 1px solid rgba(0, 0, 0, 0.23);
+  border-radius: 4px;
+  background-color: white;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.text-field:hover {
+  border-color: rgba(0, 0, 0, 0.87);
+}
+
+.text-field:focus {
+  border-color: #3f51b5;
+  border-width: 2px;
+  padding: 9.5px 13px;
+}
+
+.select-field {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='rgba(0,0,0,0.54)'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 7px center;
+  background-size: 24px;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+.button-container {
+  margin-top: 60px;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.btn-secondary {
+  min-width: 64px;
+  padding: 6px 16px;
+  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.75;
+  letter-spacing: 0.02857em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.87);
+  background-color: #e0e0e0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: none;
+}
+
+.btn-secondary:hover {
+  background-color: #d5d5d5;
+}
+
+.btn-primary {
+  min-width: 64px;
+  padding: 6px 16px;
+  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.75;
+  letter-spacing: 0.02857em;
+  text-transform: uppercase;
+  color: white;
+  background-color: #3f51b5;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: none;
+  margin-left: 56px;
+}
+
+.btn-primary:hover {
+  background-color: #303f9f;
+}
+
+.btn-primary:active,
+.btn-secondary:active {
+  box-shadow: none;
+}
+</style>

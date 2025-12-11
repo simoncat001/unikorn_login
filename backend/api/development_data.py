@@ -440,6 +440,56 @@ def delete_dev_data(
     return {"status": status.API_OK}
 
 
+@router.get("/api/download/{filename:path}")
+def download_file(filename: str):
+    """
+    下载文件接口，支持路径格式
+    支持格式:
+    1. 简单文件名: abc123.zip
+    2. 带路径的文件: devdata/abc123.zip
+    """
+    try:
+        # 验证文件名有效性
+        if not filename or len(filename.strip()) == 0:
+            raise HTTPException(status_code=400, detail="文件名不能为空")
+        
+        # URL解码
+        import urllib.parse
+        object_key = urllib.parse.unquote(filename)
+        
+        # 清理路径：移除前导斜杠
+        object_key = object_key.lstrip('/')
+        
+        # 基本的文件名安全检查：防止路径遍历攻击
+        if '..' in object_key or object_key.startswith('.'):
+            raise HTTPException(status_code=400, detail="无效的文件路径")
+        
+        # 提取显示文件名（用于Content-Disposition）
+        display_filename = object_key.split('/')[-1] if '/' in object_key else object_key
+        
+        logger.info(f"下载请求: object_key={object_key}, display_filename={display_filename}, bucket={MINIO_BUCKET}")
+        
+        # 从 MinIO 获取对象
+        response = client.get_object(MINIO_BUCKET, object_key)
+        
+        return StreamingResponse(
+            response, 
+            media_type="application/octet-stream", 
+            headers={
+                "Content-Disposition": f"attachment; filename={urllib.parse.quote(display_filename)}"
+            }
+        )
+    except S3Error as e:
+        logger.error(f"文件下载失败: {object_key} - S3错误: {e.code} - {str(e)}")
+        raise HTTPException(status_code=404, detail=f"文件未找到: {object_key}")
+    except HTTPException:
+        # 重新抛出已经处理的HTTP异常
+        raise
+    except Exception as e:
+        logger.error(f"文件下载失败: {filename} - 异常: {type(e).__name__}: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"下载失败: {str(e)}")
+
+
 @router.get("/api/dev_data/{object_id}")
 def read_dev_data(
     object_id: str,
@@ -593,39 +643,6 @@ async def upload_file(file: UploadFile = File(...)):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/api/download/{filename}")
-def download_file(filename: str):
-    try:
-        # 验证文件名有效性
-        if not filename or len(filename.strip()) == 0:
-            raise HTTPException(status_code=400, detail="文件名不能为空")
-        
-        # 清理无效字符或格式
-        # 移除URL编码字符如%3A（冒号）
-        import urllib.parse
-        clean_filename = urllib.parse.unquote(filename)
-        
-        # 基本的文件名安全检查
-        if clean_filename.startswith('.') and not clean_filename.startswith('./'):
-            # 处理以.开头的文件名，确保它不是仅由扩展名组成
-            if clean_filename.count('.') == 1 and not clean_filename.split('.')[0]:
-                raise HTTPException(status_code=400, detail="无效的文件名格式")
-        
-        # 从 MinIO 获取对象
-        response = client.get_object(MINIO_BUCKET, clean_filename)
-        return StreamingResponse(response, media_type="application/octet-stream", headers={
-            "Content-Disposition": f"attachment; filename={clean_filename}"
-        })
-    except S3Error as e:
-        logger.error(f"文件下载失败: {clean_filename} - S3错误: {str(e)}")
-        raise HTTPException(status_code=404, detail="文件未找到")
-    except HTTPException:
-        # 重新抛出已经处理的HTTP异常
-        raise
-    except Exception as e:
-        logger.error(f"文件下载失败: {filename} - 异常: {type(e).__name__}: {str(e)}")
-        raise HTTPException(status_code=400, detail=f"下载失败: {str(e)}")
 
 
 @router.delete("/api/delete_file/{file_path:path}")

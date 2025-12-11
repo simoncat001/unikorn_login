@@ -1,5 +1,8 @@
-import { useState, useEffect } from "react";
-import { Box, Typography, Button } from "@material-ui/core";
+import { useState, useEffect, useCallback } from "react";
+import { Box, Typography, Button, TextField, IconButton } from "@material-ui/core";
+import EditIcon from "@material-ui/icons/Edit";
+import CheckIcon from "@material-ui/icons/Check";
+import CloseIcon from "@material-ui/icons/Close";
 
 import { useHistory } from "react-router-dom";
 import Common from "../common/Common";
@@ -69,27 +72,42 @@ const DevDataDetailComponent: React.FC<{ id: string; publicPage: boolean }> = ({
   publicPage,
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [devJsonData, setDevJsonData] = useState(JSON.parse("{}"));
+  const [devJsonData, setDevJsonData] =
+    useState<DevelopmentDataJSON | undefined>(undefined);
   const [alertOpen, setAlertOpen] = useState(false);
   const [status, setStatus] = useState(0);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState("");
   const classes = useStyles();
   const fontClasses = Common.fontStyles();
   const history = useHistory();
-  const btnClasses = Common.buttonStyles();
-  useEffect(() => {
-    void (async () => {
-      try {
-        const devDataObject: DevelopmentData =
-          await DevelopmentDataService.getDevData(id);
-        setDevJsonData(devDataObject.json_data);
-      } catch (e) {
-        setDevJsonData({});
-      }
-      setIsLoaded(true);
-    })();
+
+  // 加载数据的函数，使用 useCallback 避免无限循环
+  const loadData = useCallback(async () => {
+    setIsLoaded(false);
+    try {
+      const devDataObject: DevelopmentData =
+        await DevelopmentDataService.getDevData(id);
+      setDevJsonData(devDataObject.json_data);
+    } catch (e) {
+      setDevJsonData(undefined);
+    }
+    setIsLoaded(true);
   }, [id]);
 
-  if (!isLoaded) {
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
+
+  // 监听 location state 的变化，如果有 refresh 标记则重新加载
+  useEffect(() => {
+    const locationState = history.location.state as any;
+    if (locationState?.refresh) {
+      void loadData();
+      // 清除 state 中的 refresh 标记，避免重复刷新
+      history.replace(history.location.pathname, {});
+    }
+  }, [history, loadData]); if (!isLoaded) {
     return <LoadingComponent />;
   }
   if (!devJsonData) {
@@ -97,7 +115,45 @@ const DevDataDetailComponent: React.FC<{ id: string; publicPage: boolean }> = ({
     return null;
   }
 
-  const DetailTitle = devJsonData.title;
+  // 优先使用 title 字段，如果没有则使用 data_content 中的"实验名称"字段
+  const experimentNameField = devJsonData.data_content?.find(
+    item => item.title === "实验名称" || item.title === "名称"
+  );
+  const DetailTitle = devJsonData.title || (experimentNameField?.content as string) || "未命名";
+
+  // 开始编辑标题
+  const handleStartEdit = () => {
+    setEditedTitle(devJsonData.title);
+    setIsEditingTitle(true);
+  };
+
+  // 取消编辑
+  const handleCancelEdit = () => {
+    setIsEditingTitle(false);
+    setEditedTitle("");
+  };
+
+  // 保存标题
+  const handleSaveTitle = async () => {
+    try {
+      const result = await DevelopmentDataService.updateDataContent(
+        id,
+        devJsonData.data_content,
+        editedTitle
+      );
+      setStatus(result ?? 0);
+      setAlertOpen(true);
+      if (result === 0) {
+        // 更新成功，重新加载数据
+        await loadData();
+        setIsEditingTitle(false);
+      }
+    } catch (e) {
+      setStatus(-1);
+      setAlertOpen(true);
+      console.error(e);
+    }
+  };
 
   return (
     <Box display="flex" flexDirection="column" m={4}>
@@ -120,9 +176,44 @@ const DevDataDetailComponent: React.FC<{ id: string; publicPage: boolean }> = ({
       )}
 
       <Box display="flex" my={3}>
-        <Typography className={fontClasses.DetailTitle}>
-          {DetailTitle}
-        </Typography>
+        {!isEditingTitle ? (
+          <Box display="flex" alignItems="center">
+            <Typography className={fontClasses.DetailTitle}>
+              {DetailTitle}
+            </Typography>
+            <IconButton
+              size="small"
+              onClick={handleStartEdit}
+              style={{ marginLeft: 8 }}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        ) : (
+          <Box display="flex" alignItems="center">
+            <TextField
+              value={editedTitle}
+              onChange={(e) => setEditedTitle(e.target.value)}
+              variant="outlined"
+              size="small"
+              style={{ marginRight: 8 }}
+              autoFocus
+            />
+            <IconButton
+              size="small"
+              onClick={handleSaveTitle}
+              color="primary"
+            >
+              <CheckIcon />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={handleCancelEdit}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        )}
       </Box>
       {!publicPage ? (
         <Box display="flex" justifyContent="flex-end">
@@ -207,7 +298,16 @@ const DevDataDetailComponent: React.FC<{ id: string; publicPage: boolean }> = ({
       </Box>
       <PreviewCard
         itemType={"data"}
-        content={<ContentObject content={devJsonData.data_content} />}
+        content={
+          <ContentObject
+            content={devJsonData.data_content}
+            order={devJsonData.word_order}
+          />
+        }
+        showEditButton={!publicPage}
+        onEditClick={() => {
+          history.push(`${DEVELOPMENT_DATA_EDIT_PATH}/${id}?hideFiles=true`);
+        }}
       />
       {!publicPage ? (
         <Box display="flex" justifyContent="flex-end" mt={2}>

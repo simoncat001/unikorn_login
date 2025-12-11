@@ -30,7 +30,7 @@ const templateTypeMap: { [key: string]: string } = {
   sample: "样品信息（Sample）",
   source: "源数据（Source）",
   derived: "衍生数据（Derived）",
-  application: "应用数据（Application）",
+  application: "应用数据集（Application）",
 };
 
 const templateSourceMap: { [key: string]: string } = {

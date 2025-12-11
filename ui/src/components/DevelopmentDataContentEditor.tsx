@@ -31,7 +31,8 @@ const PrimitiveInput: React.FC<{
 const ArrayEditor: React.FC<{
   item: DataContent;
   onChange: (updated: DataContent) => void;
-}> = ({ item, onChange }) => {
+  hideFileFields?: boolean;
+}> = ({ item, onChange, hideFileFields = false }) => {
   const btnClasses = Common.buttonStyles();
   const content = Array.isArray(item.content)
     ? item.content
@@ -50,6 +51,7 @@ const ArrayEditor: React.FC<{
           <Box key={`${child.title}-${idx}`} ml={2}>
             <EditableDataContent
               item={child}
+              hideFileFields={hideFileFields}
               onChange={(updated) => {
                 const next = [...objectContent];
                 next[idx] = updated;
@@ -79,31 +81,35 @@ const ArrayEditor: React.FC<{
               onChange({ ...item, content: next as (string | number)[] });
             }}
           />
-          <Button
-            className={btnClasses.SecondarySmall}
-            onClick={() => {
-              const next = [...primitiveContent];
-              next.splice(idx, 1);
-              onChange({ ...item, content: next as (string | number)[] });
-            }}
-          >
-            删除
-          </Button>
+          {!hideFileFields && (
+            <Button
+              className={btnClasses.SecondarySmall}
+              onClick={() => {
+                const next = [...primitiveContent];
+                next.splice(idx, 1);
+                onChange({ ...item, content: next as (string | number)[] });
+              }}
+            >
+              删除
+            </Button>
+          )}
         </Box>
       ))}
-      <Box>
-        <Button
-          className={btnClasses.SecondarySmall}
-          onClick={() =>
-            onChange({
-              ...item,
-              content: [...primitiveContent, ""] as (string | number)[],
-            })
-          }
-        >
-          添加条目
-        </Button>
-      </Box>
+      {!hideFileFields && (
+        <Box>
+          <Button
+            className={btnClasses.SecondarySmall}
+            onClick={() =>
+              onChange({
+                ...item,
+                content: [...primitiveContent, ""] as (string | number)[],
+              })
+            }
+          >
+            添加条目
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };
@@ -153,7 +159,13 @@ const NumberRangeEditor: React.FC<{
 const EditableDataContent: React.FC<{
   item: DataContent;
   onChange: (item: DataContent) => void;
-}> = ({ item, onChange }) => {
+  hideFileFields?: boolean;
+}> = ({ item, onChange, hideFileFields = false }) => {
+  // 如果设置了隐藏文件字段，且当前字段是文件类型，则不渲染
+  if (hideFileFields && (item.type === "file" || item.type === "image")) {
+    return null;
+  }
+
   const renderByType = () => {
     switch (item.type) {
       case "object":
@@ -163,6 +175,7 @@ const EditableDataContent: React.FC<{
               <Box key={`${child.title}-${idx}`} ml={2}>
                 <EditableDataContent
                   item={child}
+                  hideFileFields={hideFileFields}
                   onChange={(updated) => {
                     const next: DataContent[] = Array.isArray(item.content)
                       ? [...(item.content as DataContent[])]
@@ -176,7 +189,7 @@ const EditableDataContent: React.FC<{
           </Box>
         );
       case "array":
-        return <ArrayEditor item={item} onChange={onChange} />;
+        return <ArrayEditor item={item} onChange={onChange} hideFileFields={hideFileFields} />;
       case "file":
       case "image":
         return <FileEditor item={item} onChange={onChange} />;
@@ -205,15 +218,19 @@ const EditableDataContent: React.FC<{
 const DevelopmentDataContentEditor: React.FC<{
   dataContent: DataContent[];
   onChange: (next: DataContent[]) => void;
-}> = ({ dataContent, onChange }) => {
+  hideFileFields?: boolean;
+}> = ({ dataContent, onChange, hideFileFields = false }) => {
   return (
     <Paper style={{ padding: 16, width: "100%" }}>
-      <Typography variant="h6">数据内容编辑</Typography>
+      <Typography variant="h6">
+        数据内容编辑{hideFileFields ? " (文件字段已隐藏)" : ""}
+      </Typography>
       <Divider style={{ margin: "8px 0" }} />
       {dataContent.map((item, idx) => (
         <EditableDataContent
           key={`${item.title}-${idx}`}
           item={item}
+          hideFileFields={hideFileFields}
           onChange={(updated) => {
             const next = [...dataContent];
             next[idx] = updated;
