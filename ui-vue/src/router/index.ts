@@ -5,6 +5,7 @@ import ErrorView from "../views/ErrorView.vue";
 import NotFoundView from "../views/NotFoundView.vue";
 import LoginView from "../views/LoginView.vue";
 import TemplateCreateView from "../views/templates/TemplateCreateView.vue";
+import TemplateFragmentCreateView from "../views/templates/TemplateFragmentCreateView.vue";
 import TemplateDetailView from "../views/templates/TemplateDetailView.vue";
 import TemplateEditView from "../views/templates/TemplateEditView.vue";
 import TemplateRecommendView from "../views/templates/TemplateRecommendView.vue";
@@ -23,18 +24,24 @@ import DevelopmentCreateView from "../views/data/DevelopmentCreateView.vue";
 import DevelopmentEditView from "../views/data/DevelopmentEditView.vue";
 import DevelopmentDetailView from "../views/data/DevelopmentDetailView.vue";
 import DevelopmentPublicView from "../views/data/DevelopmentPublicView.vue";
-import ApplicationDataCreateView from "../views/data/ApplicationDataCreateView.vue";
 import MGIDApplyCreateView from "../views/mgid/MGIDApplyCreateView.vue";
 import MGIDDetailView from "../views/mgid/MGIDDetailView.vue";
 import MGIDPublicView from "../views/mgid/MGIDPublicView.vue";
 import UserCenterView from "../views/UserCenterView.vue";
+import StandardUploadView from "../views/standards/StandardUploadView.vue";
+import StandardDetailView from "../views/standards/StandardDetailView.vue";
+import StandardRecommendView from "../views/standards/StandardRecommendView.vue";
 import { PATHS } from "./paths";
 
 const routes: Array<RouteRecordRaw> = [
   { path: PATHS.HOME_PATH, name: "home", component: HomeView },
   { path: PATHS.ABOUT_PATH, name: "about", component: AboutView },
   { path: PATHS.TEMPLATES_CREATE_PATH, name: "templates-create", component: TemplateCreateView },
+  { path: PATHS.TEMPLATES_FRAGMENT_CREATE_PATH, name: "templates-fragment-create", component: TemplateFragmentCreateView },
   { path: PATHS.TEMPLATES_RECOMMEND_PATH, name: "templates-recommend", component: TemplateRecommendView },
+  { path: PATHS.STANDARD_RECOMMEND_PATH, name: "standard-recommend", component: StandardRecommendView },
+  { path: PATHS.STANDARD_UPLOAD_PATH, name: "standard-upload", component: StandardUploadView },
+  { path: `${PATHS.STANDARD_DETAIL_PATH}/:id`, name: "standard-detail", component: StandardDetailView },
   {
     path: PATHS.DEVELOPMENT_DATA_MULYIPART_UPLOAD_PATH,
     name: "development-data-multipart",
@@ -69,17 +76,14 @@ const routes: Array<RouteRecordRaw> = [
     component: DevelopmentPublicView
   },
   { path: `${PATHS.TEMPLATES_EDIT_PATH}/:id`, name: "templates-edit", component: TemplateEditView },
-  {
-    path: PATHS.APPLICATION_DATA_CREATE_PATH,
-    name: "application-data-create",
-    component: ApplicationDataCreateView
-  },
   { path: PATHS.MGID_APPLY_CREATE_PATH, name: "mgid-apply-create", component: MGIDApplyCreateView },
   { path: `${PATHS.MGID_DETAIL_PATH}/:MGID/:custom`, name: "mgid-detail", component: MGIDDetailView },
   { path: `${PATHS.MGID_PATH}/:MGID/:custom`, name: "mgid-public", component: MGIDPublicView },
   { path: PATHS.ERROR_PATH, name: "error", component: ErrorView },
   { path: PATHS.LOGIN_PATH, name: "login", component: LoginView },
   { path: PATHS.NOT_FOUND_PATH, name: "not-found", component: NotFoundView },
+  { path: "/index.html", redirect: PATHS.HOME_PATH },
+  { path: "/home", redirect: PATHS.HOME_PATH },
   { path: "/:pathMatch(.*)*", redirect: PATHS.NOT_FOUND_PATH }
 ];
 

@@ -1,27 +1,242 @@
 <template>
-  <section class="stack">
-    <header class="section-header">
-      <div>
-        <p class="eyebrow">管理台</p>
-        <h2>数据审核 #{{ id }}</h2>
-        <p class="muted">查看开发数据的元信息与文件列表。</p>
-      </div>
-      <div class="actions">
-        <button class="secondary" type="button">驳回</button>
-        <button class="primary" type="button">通过</button>
-      </div>
-    </header>
+  <div class="admin-detail-layout">
+    <MainAppBar />
+    <div class="main-content">
+      <div class="detail-container">
+        <div class="header">
+          <h2>数据审核</h2>
+          <button @click="router.back()">返回</button>
+        </div>
 
-    <article class="section-card">
-      <h3>数据概览</h3>
-      <p>演示数据：从接口获取文件大小、格式与校验信息。</p>
-    </article>
-  </section>
+        <div v-if="loading" class="loading">加载中...</div>
+        <div v-else-if="dataItem" class="content">
+          <div class="info-section">
+            <h3>基本信息</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <label>标题</label>
+                <span>{{ dataItem.json_data.title }}</span>
+              </div>
+              <div class="info-item">
+                <label>模板名称</label>
+                <span>{{ dataItem.json_data.template_name }}</span>
+              </div>
+              <div class="info-item">
+                <label>机构</label>
+                <span>{{ dataItem.json_data.institution }}</span>
+              </div>
+              <div class="info-item">
+                <label>MGID</label>
+                <span>{{ dataItem.json_data.MGID }}</span>
+              </div>
+              <div class="info-item full-width">
+                <label>数据内容</label>
+                <div class="data-content-wrapper">
+                  <DevelopmentDataContent :data="dataItem.json_data" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="review-section">
+            <h3>审核操作</h3>
+            <div class="review-form">
+              <div class="form-group">
+                <label>审核结果</label>
+                <div class="radio-group">
+                  <label>
+                    <input type="radio" v-model="reviewStatus" value="passed" /> 通过
+                  </label>
+                  <label>
+                    <input type="radio" v-model="reviewStatus" value="rejected" /> 拒绝
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>审核意见</label>
+                <textarea v-model="reviewComment" rows="4" placeholder="请输入审核意见..."></textarea>
+              </div>
+              <div class="form-actions">
+                <button class="btn-primary" @click="handleSubmit" :disabled="submitting">提交审核</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { useRoute } from "vue-router";
+import { ref, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import MainAppBar from '../../components/MainAppBar.vue';
+import DevelopmentDataService, { DevelopmentData } from '../../api/DevelopmentDataService';
+import DevelopmentDataContent from '../../components/development-data/DevelopmentDataContent.vue';
+import AdminService from '../../api/AdminService';
+import { getUser } from '../../api/AuthService';
 
 const route = useRoute();
+const router = useRouter();
 const id = route.params.id as string;
+
+const loading = ref(true);
+const submitting = ref(false);
+const dataItem = ref<DevelopmentData | null>(null);
+const reviewStatus = ref('passed');
+const reviewComment = ref('');
+
+onMounted(async () => {
+  try {
+    dataItem.value = await DevelopmentDataService.getDevData(id);
+    if (dataItem.value) {
+        reviewStatus.value = dataItem.value.json_data.review_status === 'submitted' ? 'passed' : dataItem.value.json_data.review_status;
+        reviewComment.value = dataItem.value.json_data.rejected_reason || '';
+    }
+  } catch (e) {
+    console.error(e);
+    alert('加载失败');
+  } finally {
+    loading.value = false;
+  }
+});
+
+const handleSubmit = async () => {
+  if (!dataItem.value) return;
+  
+  submitting.value = true;
+  try {
+    const userInfo = getUser();
+    const reviewer = (userInfo && userInfo.username) ? userInfo.username : 'admin'; 
+    
+    const status = await AdminService.updateReview(
+      dataItem.value.id,
+      'data',
+      reviewer,
+      reviewStatus.value,
+      reviewComment.value
+    );
+    
+    if (status === 0) {
+      alert('审核提交成功');
+      router.back();
+    } else {
+      alert('审核提交失败');
+    }
+  } catch (e) {
+    console.error(e);
+    alert('提交出错');
+  } finally {
+    submitting.value = false;
+  }
+};
 </script>
+
+<style scoped>
+.admin-detail-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.detail-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 16px;
+}
+
+.info-section, .review-section {
+  margin-bottom: 32px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-item.full-width {
+  grid-column: span 2;
+}
+
+.info-item label {
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.json-preview {
+  background: #f5f5f5;
+  padding: 10px;
+  border-radius: 4px;
+  overflow-x: auto;
+  max-height: 300px;
+  font-size: 12px;
+}
+
+.review-form {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 4px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.radio-group {
+  display: flex;
+  gap: 20px;
+}
+
+textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.btn-primary {
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-primary:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+</style>

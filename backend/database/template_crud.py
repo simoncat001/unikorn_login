@@ -61,8 +61,8 @@ def is_template_exist(db: Session, db_template: models.Template, id: str):
 def get_templates_list(db: Session, user: str, start: int, size: int):
     templates_list = (
         db.query(models.Template.id, models.Template.json_schema)
-        .filter(models.Template.json_schema["author"].astext == user)
-        .order_by(models.Template.json_schema["create_timestamp"].astext.desc())
+        .filter(cast(models.Template.json_schema["author"], String) == user)
+        .order_by(cast(models.Template.json_schema["create_timestamp"], String).desc())
         .slice(start, start + size)
     ).all()
     return [
@@ -74,7 +74,7 @@ def get_templates_list(db: Session, user: str, start: int, size: int):
 def get_templates_count(db: Session, user: str):
     templates_count = (
         db.query(func.count(models.Template.id))
-        .filter(models.Template.json_schema["author"].astext == user)
+        .filter(cast(models.Template.json_schema["author"], String) == user)
         .scalar()
     )
     return templates_count
@@ -91,11 +91,11 @@ def filter_templates_list(
         db.query(models.Template.id, models.Template.json_schema)
         .filter(
             and_(
-                models.Template.json_schema["author"].astext == user,
-                models.Template.json_schema["review_status"].astext.like(f"%{status_filter}%"),
+                cast(models.Template.json_schema["author"], String) == user,
+                cast(models.Template.json_schema["review_status"], String).like(f"%{status_filter}%"),
             )
         )
-        .order_by(models.Template.json_schema["create_timestamp"].astext.desc())
+        .order_by(cast(models.Template.json_schema["create_timestamp"], String).desc())
         .slice(start, start + size)
         .all()
     )
@@ -107,8 +107,8 @@ def filter_templates_count(db: Session, user: str, status_filter: str):
         db.query(func.count(models.Template.id))
         .filter(
             and_(
-                models.Template.json_schema["author"].astext == user,
-                models.Template.json_schema["review_status"].astext.like(f"%{status_filter}%"),
+                cast(models.Template.json_schema["author"], String) == user,
+                cast(models.Template.json_schema["review_status"], String).like(f"%{status_filter}%"),
             )
         )
         .scalar()
@@ -175,12 +175,12 @@ def get_template_list_with_begin(db: Session, begin_word: str):
         db.query(models.Template.name, models.Template.id)
         .filter(models.Template.id.notin_(constants.UNSEARCHABLE_TEMPLATE_ID_SET))
         .filter(
-            models.Template.json_schema["review_status"].astext.like(
+            cast(models.Template.json_schema["review_status"], String).like(
                 f"{constants.REVIEW_STATUS_PASSED_REVIEW}%"
             )
         )
         .filter(
-            models.Template.json_schema["template_type"].astext != "application",
+            cast(models.Template.json_schema["template_type"], String) != "application",
             cast(models.Template.name, String).like(f"%{begin_word}%"),
         )
     ).all()
@@ -201,12 +201,12 @@ def get_application_template_list_with_begin(db: Session, begin_word: str):
         )
         .filter(models.Template.id.notin_(constants.UNSEARCHABLE_TEMPLATE_ID_SET))
         .filter(
-            models.Template.json_schema["review_status"].astext.like(
+            cast(models.Template.json_schema["review_status"], String).like(
                 f"{constants.REVIEW_STATUS_PASSED_REVIEW}%"
             )
         )
         .filter(
-            models.Template.json_schema["template_type"].astext == "application",
+            cast(models.Template.json_schema["template_type"], String) == "application",
             cast(models.Template.name, String).like(f"%{begin_word}%"),
         )
     ).all()

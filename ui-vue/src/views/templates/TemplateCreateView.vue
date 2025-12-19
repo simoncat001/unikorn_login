@@ -13,10 +13,9 @@
             </div>
             <div class="preset-words">
               <h4>预定义字段</h4>
-              <div v-if="presetWordList && Object.keys(presetWordList).length > 0" class="preset-list">
-                <div v-for="(words, category) in presetWordList" :key="category" class="preset-category">
-                  <strong>{{ category }}:</strong>
-                  <span class="preset-items">{{ words.join(', ') }}</span>
+              <div v-if="currentPresetWords.length > 0" class="preset-list">
+                <div class="preset-category">
+                  <span class="preset-items">{{ currentPresetWords.join(', ') }}</span>
                 </div>
               </div>
               <p v-else class="no-preset">暂无预定义字段</p>
@@ -45,46 +44,85 @@
           </div>
 
           <div v-if="activeStep === 0" class="step-content">
-            <h2 class="form-title">模板基本信息</h2>
-            
-            <div class="form-section">
-              <div class="form-row">
-                <label class="form-label required">
-                  模板名称
+            <div class="form-section-aligned">
+              <div class="form-row-aligned">
+                <label class="form-label-aligned required">模板标题：</label>
+                <div class="form-input-wrapper">
                   <input 
                     v-model="basicInfo.title" 
                     type="text" 
-                    class="form-input"
-                    placeholder="请输入模板名称"
+                    class="form-input-styled"
                   />
-                </label>
+                </div>
               </div>
 
-              <div class="form-row">
-                <label class="form-label required">
-                  模板类型
-                  <select v-model="basicInfo.template_type" class="form-select">
-                    <option value="">请选择模板类型</option>
-                    <option value="basic">基础模板</option>
-                    <option value="application">应用模板</option>
-                  </select>
-                </label>
+              <div class="form-row-aligned">
+                <label class="form-label-aligned required">数据产生方式：</label>
+                <div class="form-input-wrapper radio-group-horizontal">
+                  <label class="radio-label"><input type="radio" v-model="basicInfo.data_generation_method" value="experiment"> 实验</label>
+                  <label class="radio-label"><input type="radio" v-model="basicInfo.data_generation_method" value="calculation"> 计算</label>
+                  <label class="radio-label"><input type="radio" v-model="basicInfo.data_generation_method" value="production"> 生产</label>
+                  <label class="radio-label"><input type="radio" v-model="basicInfo.data_generation_method" value="other"> 其它</label>
+                </div>
               </div>
 
-              <div class="form-row">
-                <label class="form-label required">
-                  模板来源
-                  <select v-model="basicInfo.template_source" class="form-select">
-                    <option value="">请选择模板来源</option>
-                    <option value="standard">标准模板</option>
-                    <option value="unstandard">非标准模板</option>
-                  </select>
-                </label>
+              <div class="form-row-aligned">
+                <label class="form-label-aligned">单位：</label>
+                <div class="form-input-wrapper">
+                  <input 
+                    v-model="basicInfo.unit" 
+                    type="text" 
+                    class="form-input-styled"
+                  />
+                </div>
               </div>
 
-              <div class="form-actions">
-                <button type="button" class="btn btn-primary" @click="goToStep2">
-                  下一步
+              <div class="form-row-aligned">
+                <label class="form-label-aligned">模板发表平台：</label>
+                <div class="form-input-wrapper">
+                  <input 
+                    v-model="basicInfo.platform" 
+                    type="text" 
+                    class="form-input-styled"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row-aligned">
+                <label class="form-label-aligned required">模板类型：</label>
+                <div class="form-input-wrapper radio-group-vertical">
+                  <label class="radio-label"><input type="radio" v-model="basicInfo.template_type" value="sample"> 样品信息 (Sample)</label>
+                  <label class="radio-label"><input type="radio" v-model="basicInfo.template_type" value="source"> 源数据 (Source)</label>
+                  <label class="radio-label"><input type="radio" v-model="basicInfo.template_type" value="derived"> 衍生数据 (Derived)</label>
+                  <label class="radio-label"><input type="radio" v-model="basicInfo.template_type" value="application"> 应用数据集 (Application)</label>
+                </div>
+              </div>
+
+              <div class="form-row-aligned">
+                <label class="form-label-aligned required">来源标准号：</label>
+                <div class="form-input-wrapper">
+                  <input 
+                    v-model="basicInfo.source_standard_number" 
+                    type="text" 
+                    class="form-input-styled"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row-aligned">
+                <label class="form-label-aligned required">来源标准名称：</label>
+                <div class="form-input-wrapper">
+                  <input 
+                    v-model="basicInfo.source_standard_name" 
+                    type="text" 
+                    class="form-input-styled"
+                  />
+                </div>
+              </div>
+
+              <div class="form-actions-centered">
+                <button type="button" class="btn-next" @click="goToStep2">
+                  下 一 步
                 </button>
               </div>
             </div>
@@ -93,20 +131,21 @@
           <div v-if="activeStep === 1" class="step-content">
             <h2 class="form-title">模板创建</h2>
 
-            <div class="form-section">
-              <div class="form-row">
-                <label class="form-label">
-                  模板字段名称
-                  <input 
-                    v-model="templateData.field_name" 
-                    type="text" 
-                    class="form-input"
-                    placeholder="请输入字段名称"
-                  />
-                </label>
-              </div>
+            <div class="form-section-aligned">
+              <!-- Preset Words Component -->
+              <TemplatePresetWords 
+                :presetWordList="presetWordList" 
+                :templateType="basicInfo.template_type" 
+              />
 
-              <div class="form-actions">
+              <!-- Recursive Template Editor -->
+              <TemplateEditor 
+                :level="0" 
+                :max-level="10"
+                v-model:items="templateData.level0" 
+              />
+
+              <div class="form-actions-centered" style="gap: 20px;">
                 <button type="button" class="btn btn-secondary" @click="goToStep1">
                   上一步
                 </button>
@@ -152,9 +191,12 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+import { reactive, ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import MainAppBar from "@/components/MainAppBar.vue";
+import TemplateEditor from "@/components/templates/TemplateEditor.vue";
+import TemplatePresetWords from "@/components/templates/TemplatePresetWords.vue";
+import TemplateService from "@/api/TemplateService";
 
 const router = useRouter();
 const steps = ["模板基本信息", "模板创建"];
@@ -166,21 +208,45 @@ const createdTemplateId = ref("");
 
 const basicInfo = reactive({
   title: "",
-  template_type: "",
-  template_source: ""
+  data_generation_method: "experiment",
+  unit: "上海交通大学",
+  platform: "MGSDB",
+  template_type: "sample",
+  source_standard_number: "",
+  source_standard_name: ""
 });
 
 const templateData = reactive({
-  field_name: ""
+  level0: [] as any[]
 });
 
-const presetWordList = ref<{ [key: string]: string[] }>({
-  "基本信息": ["名称", "版本"],
-  "技术参数": ["算法", "框架"]
+const presetWordList = ref<{ [key: string]: string[] }>({});
+
+const currentPresetWords = computed(() => {
+  const list = presetWordList.value[basicInfo.template_type] || [];
+  return list.map(w => {
+    const parts = w.split(':');
+    if (parts.length < 3) return w;
+    return parts.slice(0, parts.length - 2).join(':');
+  });
+});
+
+onMounted(async () => {
+  try {
+    presetWordList.value = await TemplateService.getPresetWordList();
+  } catch (e) {
+    console.error("Failed to fetch preset word list", e);
+  }
 });
 
 const getTemplateTypeLabel = (type: string) => {
-  return type === "basic" ? "基础模板" : type === "application" ? "应用模板" : type;
+  const map: Record<string, string> = {
+    sample: "样品信息",
+    source: "源数据",
+    derived: "衍生数据",
+    application: "应用数据集"
+  };
+  return map[type] || type;
 };
 
 const goToStep1 = () => {
@@ -189,7 +255,15 @@ const goToStep1 = () => {
 
 const goToStep2 = () => {
   if (!basicInfo.title) {
-    errorMessage.value = "请输入模板名称";
+    errorMessage.value = "请输入模板标题";
+    return;
+  }
+  if (!basicInfo.source_standard_number) {
+    errorMessage.value = "请输入来源标准号";
+    return;
+  }
+  if (!basicInfo.source_standard_name) {
+    errorMessage.value = "请输入来源标准名称";
     return;
   }
   errorMessage.value = "";
@@ -218,14 +292,14 @@ const createAnother = () => {
   basicInfo.title = "";
   basicInfo.template_type = "";
   basicInfo.template_source = "";
-  templateData.field_name = "";
+  templateData.level0 = [];
 };
 </script>
 
 <style scoped>
 .template-create-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: #ffffff;
   font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 .content-wrapper {
@@ -233,13 +307,15 @@ const createAnother = () => {
 }
 .main-content {
   display: flex;
+  justify-content: center;
   max-width: 1400px;
   margin: 0 auto;
   padding: 62px 20px 40px;
+  gap: 40px;
 }
 .tree-view-sidebar {
   width: 300px;
-  margin-right: 40px;
+  flex-shrink: 0;
 }
 .tree-view-content {
   background: white;
@@ -270,7 +346,8 @@ const createAnother = () => {
 }
 .form-container {
   flex: 1;
-  max-width: 800px;
+  max-width: 900px;
+  width: 100%;
 }
 .stepper-wrapper {
   margin-bottom: 40px;
@@ -279,45 +356,52 @@ const createAnother = () => {
 }
 .stepper {
   display: flex;
-  gap: 40px;
+  gap: 100px;
+  position: relative;
 }
 .step {
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
+  z-index: 1;
 }
 .step-number {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background-color: #e0e0e0;
-  color: #999;
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
   margin-bottom: 8px;
+  font-size: 14px;
 }
 .step.active .step-number {
   background-color: #3f51b5;
-  color: white;
 }
 .step-label {
   font-size: 14px;
-  color: #666;
+  color: #999;
 }
 .step.active .step-label {
   color: #3f51b5;
-  font-weight: 600;
+  font-weight: 500;
 }
 .step-connector {
   position: absolute;
-  top: 20px;
-  left: calc(100% + 20px);
-  width: 40px;
-  height: 2px;
+  top: 16px;
+  left: 50%;
+  width: 100px;
+  height: 1px;
   background-color: #e0e0e0;
+  z-index: 0;
+  transform: translateX(50%);
+}
+.step:last-child .step-connector {
+  display: none;
 }
 .error-banner {
   background-color: #f8d7da;
@@ -328,9 +412,9 @@ const createAnother = () => {
 }
 .step-content {
   background: white;
-  border-radius: 8px;
-  padding: 40px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  padding: 40px 60px;
+  box-shadow: none;
 }
 .form-title {
   font-size: 24px;
@@ -376,27 +460,39 @@ const createAnother = () => {
   border-top: 1px solid #eee;
 }
 .btn {
-  padding: 10px 24px;
+  padding: 10px 32px;
   border-radius: 4px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   border: none;
+  transition: all 0.2s;
+  min-width: 100px;
 }
 .btn-primary {
   background-color: #3f51b5;
   color: white;
+  box-shadow: 0 3px 1px -2px rgba(0,0,0,0.2), 0 2px 2px 0 rgba(0,0,0,0.14), 0 1px 5px 0 rgba(0,0,0,0.12);
 }
 .btn-primary:hover:not(:disabled) {
   background-color: #303f9f;
+  box-shadow: 0 2px 4px -1px rgba(0,0,0,0.2), 0 4px 5px 0 rgba(0,0,0,0.14), 0 1px 10px 0 rgba(0,0,0,0.12);
 }
 .btn-secondary {
-  background-color: #757575;
-  color: white;
+  background-color: #e0e0e0;
+  color: rgba(0, 0, 0, 0.87);
+  box-shadow: 0 3px 1px -2px rgba(0,0,0,0.2), 0 2px 2px 0 rgba(0,0,0,0.14), 0 1px 5px 0 rgba(0,0,0,0.12);
+}
+.btn-secondary:hover {
+  background-color: #d5d5d5;
 }
 .btn-outline {
-  background-color: white;
+  background-color: transparent;
   color: #3f51b5;
+  border: 1px solid rgba(63, 81, 181, 0.5);
+}
+.btn-outline:hover {
+  background-color: rgba(63, 81, 181, 0.04);
   border: 1px solid #3f51b5;
 }
 .btn:disabled {
@@ -447,5 +543,133 @@ const createAnother = () => {
   display: flex;
   gap: 12px;
   justify-content: center;
+}
+
+/* New Styles for Aligned Form */
+.form-section-aligned {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 20px 0;
+}
+
+.form-row-aligned {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.form-label-aligned {
+  width: 180px;
+  margin-right: 24px;
+  font-weight: 600;
+  color: #333;
+  font-size: 15px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 40px; /* Fixed height to match inputs */
+}
+
+.form-label-aligned.required::before {
+  content: "*";
+  color: #f44336;
+  margin-right: 4px;
+  font-family: sans-serif;
+}
+
+.form-input-wrapper {
+  flex: 1;
+  max-width: 500px;
+}
+
+.form-input-styled {
+  width: 100%;
+  height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s;
+  color: #333;
+  box-sizing: border-box;
+}
+
+.form-input-styled:hover {
+  border-color: #40a9ff;
+}
+
+.form-input-styled:focus {
+  border-color: #3f51b5;
+  box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2);
+}
+
+.radio-group-horizontal {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  height: 40px;
+}
+
+.radio-group-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  height: 40px; /* Match input height */
+}
+
+.radio-label input {
+  margin-right: 8px;
+  width: 16px;
+  height: 16px;
+  accent-color: #3f51b5;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+}
+
+.radio-label input {
+  margin-right: 8px;
+  width: 16px;
+  height: 16px;
+  accent-color: #3f51b5;
+}
+
+.form-actions-centered {
+  display: flex;
+  justify-content: center;
+  margin-top: 60px;
+}
+
+.btn-next {
+  background-color: #3f51b5;
+  color: white;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 10px 32px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  font-weight: 500;
+}
+
+.btn-next:hover {
+  background-color: #303f9f;
 }
 </style>

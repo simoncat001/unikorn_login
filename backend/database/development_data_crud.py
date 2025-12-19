@@ -65,9 +65,9 @@ def get_data_list_by_type(
     object_json_data = development_object.json_data
     init_filter = and_(
         development_object.template_id != constants.WORD_TEMPLATE_ID,
-        object_json_data["template_type"].astext == template_type,
-        object_json_data["review_status"].astext != constants.REVIEW_STATUS_PASSED_REVIEW_WAITING_PUBLISHED,
-        object_json_data["review_status"].astext.like(f"{constants.REVIEW_STATUS_PASSED_REVIEW}%"),
+        cast(object_json_data["template_type"], String) == template_type,
+        cast(object_json_data["review_status"], String) != constants.REVIEW_STATUS_PASSED_REVIEW_WAITING_PUBLISHED,
+        cast(object_json_data["review_status"], String).like(f"{constants.REVIEW_STATUS_PASSED_REVIEW}%"),
     )
     query_cmd = db.query(development_object).filter(init_filter)
     sample_list = []
@@ -82,7 +82,7 @@ def get_data_list_by_type(
                 continue
             if obj_type == "string":
                 query_cmd = query_cmd.filter(
-                    object_orgin_data[obj_title].astext.like(
+                    cast(object_orgin_data[obj_title], String).like(
                         f"%{post_data[obj_title]}%"
                     )
                 )
@@ -144,12 +144,12 @@ def get_related_data(
     init_filter = and_(
         development_object.template_id != constants.WORD_TEMPLATE_ID,
         or_(
-            object_json_data["template_type"].astext == "source",
-            object_json_data["template_type"].astext == "derived",
+            cast(object_json_data["template_type"], String) == "source",
+            cast(object_json_data["template_type"], String) == "derived",
         ),
         object_json_data["origin_post_data"]["关联样品MGID"].contains([sample_MGID]),
-        object_json_data["review_status"].astext != constants.REVIEW_STATUS_PASSED_REVIEW_WAITING_PUBLISHED,
-        object_json_data["review_status"].astext.like(f"{constants.REVIEW_STATUS_PASSED_REVIEW}%"),
+        cast(object_json_data["review_status"], String) != constants.REVIEW_STATUS_PASSED_REVIEW_WAITING_PUBLISHED,
+        cast(object_json_data["review_status"], String).like(f"{constants.REVIEW_STATUS_PASSED_REVIEW}%"),
     )
     query_cmd = db.query(
         models.Object,
@@ -169,9 +169,9 @@ def get_related_data(
 def get_dev_data_list(db: Session, user: str, start: int, size: int):
     return (
         db.query(models.Object)
-        .filter(models.Object.json_data["author"].astext == user)
+        .filter(cast(models.Object.json_data["author"], String) == user)
         .filter(models.Object.template_id.notin_(constants.EXCLUDETEMPLATES))
-        .order_by(models.Object.json_data["create_timestamp"].astext.desc())
+        .order_by(cast(models.Object.json_data["create_timestamp"], String).desc())
         .limit(size)
         .offset(start)
         .all()
@@ -181,7 +181,7 @@ def get_dev_data_list(db: Session, user: str, start: int, size: int):
 def get_dev_data_count(db: Session, user: str):
     return (
         db.query(func.count(models.Object.id))
-        .filter(models.Object.json_data["author"].astext == user)
+        .filter(cast(models.Object.json_data["author"], String) == user)
         .filter(models.Object.template_id.notin_(constants.EXCLUDETEMPLATES))
         .scalar()
     )
@@ -196,12 +196,12 @@ def filter_dev_data_list(
 ):
     return (
         db.query(models.Object)
-        .filter(models.Object.json_data["author"].astext == user)
+        .filter(cast(models.Object.json_data["author"], String) == user)
         .filter(
-            models.Object.json_data["review_status"].astext.like(f"{status_filter}%")
+            cast(models.Object.json_data["review_status"], String).like(f"{status_filter}%")
         )
         .filter(models.Object.template_id.notin_(constants.EXCLUDETEMPLATES))
-        .order_by(models.Object.json_data["create_timestamp"].astext.desc())
+        .order_by(cast(models.Object.json_data["create_timestamp"], String).desc())
         .limit(size)
         .offset(start)
         .all()
@@ -211,9 +211,9 @@ def filter_dev_data_list(
 def filter_dev_data_count(db: Session, user: str, status_filter: str):
     return (
         db.query(func.count(models.Object.id))
-        .filter(models.Object.json_data["author"].astext == user)
+        .filter(cast(models.Object.json_data["author"], String) == user)
         .filter(
-            models.Object.json_data["review_status"].astext.like(f"{status_filter}%")
+            cast(models.Object.json_data["review_status"], String).like(f"{status_filter}%")
         )
         .filter(models.Object.template_id.notin_(constants.EXCLUDETEMPLATES))
         .scalar()

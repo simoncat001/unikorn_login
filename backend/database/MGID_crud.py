@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, cast, String
 from . import models
 
 # NOTE:
@@ -22,8 +22,8 @@ def get_object_list(db: Session, user: str, template_id: str, start: int, size: 
     q = (
         db.query(models.Object)
         .filter(models.Object.template_id == template_id)
-        .filter(models.Object.json_data["MGID_submitter"].astext == user)
-        .order_by(models.Object.json_data["create_timestamp"].astext.desc())
+        .filter(cast(models.Object.json_data["MGID_submitter"], String) == user)
+        .order_by(cast(models.Object.json_data["create_timestamp"], String).desc())
         .offset(start)
         .limit(size)
     )
@@ -36,7 +36,7 @@ def get_MGID_count(db: Session, user: str, template_id: str):
     return (
         db.query(func.count(models.Object.id))
         .filter(models.Object.template_id == template_id)
-        .filter(models.Object.json_data["MGID_submitter"].astext == user)
+        .filter(cast(models.Object.json_data["MGID_submitter"], String) == user)
         .scalar()
     )
 
@@ -44,6 +44,6 @@ def get_MGID_count(db: Session, user: str, template_id: str):
 def get_MGID(db: Session, MGID: str):
     return (
         db.query(models.Object)
-        .filter(models.Object.json_data["MGID"].astext == MGID)
+        .filter(cast(models.Object.json_data["MGID"], String) == MGID)
         .first()
     )

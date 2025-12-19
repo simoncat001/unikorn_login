@@ -1,17 +1,15 @@
 <template>
   <header class="app-bar">
     <div class="toolbar">
-      <!-- Logo按钮 -->
-      <button class="logo-button" @click="goHome">
-        <span class="logo-text">MGSDB</span>
-      </button>
-
       <!-- 导航链接 -->
+      <router-link to="/" class="nav-button">主页</router-link>
+      <router-link to="/standards/recommend" class="nav-button">标准推荐</router-link>
+      <router-link to="/standards/upload" class="nav-button">标准上传</router-link>
       <router-link to="/words/create" class="nav-button">词汇</router-link>
       <router-link to="/templates/recommend" class="nav-button">模板推荐</router-link>
+      <router-link to="/templates/fragment/create" class="nav-button">模板片段</router-link>
       <router-link to="/templates/create" class="nav-button">模板创建</router-link>
       <router-link to="/development_data/create" class="nav-button">研发数据</router-link>
-      <router-link to="/application_data/create" class="nav-button">应用数据</router-link>
       <router-link to="/MGID_apply/create" class="nav-button">MGID申请</router-link>
 
       <!-- 占位空间 -->
@@ -113,9 +111,13 @@ const handleLogout = () => {
 <style scoped>
 .app-bar {
   width: 100%;
+  min-width: 1200px;
   background-color: #063E8B;
   color: white;
   box-shadow: 0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .toolbar {
@@ -150,11 +152,12 @@ const handleLogout = () => {
   padding: 8px 16px;
   color: white;
   text-decoration: none;
-  font-size: 14px;
-  font-weight: 400;
+  font-size: 18px;
+  font-weight: 600;
   text-align: center;
   transition: background-color 0.2s;
   font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  white-space: nowrap;
 }
 
 .nav-button:hover {
@@ -182,7 +185,8 @@ const handleLogout = () => {
   color: white;
   cursor: pointer;
   padding: 8px 16px;
-  font-size: 14px;
+  font-size: 18px;
+  font-weight: 600;
   height: 42px;
 }
 
@@ -208,7 +212,8 @@ const handleLogout = () => {
   color: white;
   cursor: pointer;
   padding: 8px 16px;
-  font-size: 14px;
+  font-size: 18px;
+  font-weight: 600;
   height: 42px;
   font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }

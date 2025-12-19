@@ -16,6 +16,7 @@ from common import db
 import uuid
 from sqlalchemy import update
 from database import models as _models
+from pydantic import BaseModel
 
 
 router = APIRouter()
@@ -263,7 +264,7 @@ def get_country_count(
 def delete_country(
     country_id: str, current_user=Depends(auth.require_roles(["admin", "super_admin"])), db: Session = Depends(db.get_db)
 ):
-    country_crud.delete_country(db=db, id=country_id)
+    country_crud.delete_country(db=db, id=uuid.UUID(country_id))
     return {"status": status.API_OK}
 
 
@@ -299,7 +300,7 @@ def delete_organization(
     current_user=Depends(auth.require_roles(["admin", "super_admin"])),
     db: Session = Depends(db.get_db),
 ):
-    organization_crud.delete_organization(db=db, id=organization_id)
+    organization_crud.delete_organization(db=db, id=uuid.UUID(organization_id))
     return {"status": status.API_OK}
 
 
@@ -381,4 +382,38 @@ def set_user_role(
         return {"status": status.API_PERMISSION_DENIED, "message": "cannot downgrade self"}
     db.query(models.User).filter(models.User.user_name == user_name).update({models.User.user_type: new_role_norm})
     db.commit()
+    return {"status": status.API_OK}
+
+class GenericReviewRequest(BaseModel):
+    id: str
+    type: str
+    reviewer: str
+    status: str
+    rejected_reason: str
+
+@router.post("/api/admin/update_review")
+def update_review(
+    req: GenericReviewRequest,
+    current_user=Depends(auth.require_roles(["admin", "super_admin"])),
+    db: Session = Depends(db.get_db),
+):
+    if req.type == 'template':
+        admin_crud.template_review_update(
+            db=db,
+            id=req.id,
+            reviewer=req.reviewer,
+            review_status=req.status,
+            rejected_reason=req.rejected_reason,
+        )
+    elif req.type in ['word', 'data', 'MGID']:
+        admin_crud.object_review_update(
+            db=db,
+            id=req.id,
+            reviewer=req.reviewer,
+            review_status=req.status,
+            rejected_reason=req.rejected_reason,
+        )
+    else:
+        return {"status": status.API_INVALID_PARAMETER, "message": "invalid type"}
+    
     return {"status": status.API_OK}

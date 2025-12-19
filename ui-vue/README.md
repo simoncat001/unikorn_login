@@ -1,4 +1,4 @@
-# Unikorn Login - Vue 版本
+# unicorn Login - Vue 版本
 
 该目录提供 Vue 3 + Vite 的前端实现，用于逐步替换原有 React 界面。现已补齐与旧版一致的业务入口，并提供可交互的表单/详情页面（模板、词条、数据、MGID、管理台等），便于直接接入真实接口。
 

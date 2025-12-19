@@ -9,6 +9,8 @@
         <p class="page-hint">
           若现有模板不合适，您可以前往
           <router-link to="/templates/create" class="create-link">创建新模板</router-link>
+          或
+          <router-link to="/standards/upload" class="create-link">上传数据标准</router-link>
         </p>
       </div>
 

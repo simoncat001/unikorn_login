@@ -122,7 +122,7 @@ const list: Template[] = [
     tags: ["qa", "中文", "rag"],
     downloads: 12540,
     updated: "3 天前",
-    owner: "Unikorn 团队"
+    owner: "unicorn 团队"
   },
   {
     id: 2,

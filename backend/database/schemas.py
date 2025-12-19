@@ -116,3 +116,26 @@ class User(BaseModel):
     else:
         class Config:
             orm_mode = True
+
+
+class StandardCreate(BaseModel):
+    name_zh: str
+    name_en: str
+    file_url: str
+    review_status: str = "pending"
+    owner: str | None = None
+
+
+class StandardStatusUpdate(BaseModel):
+    review_status: str
+
+
+class Standard(StandardCreate):
+    id: uuid.UUID
+    review_status: str
+    owner: str | None = None
+    if ConfigDict:
+        model_config = ConfigDict(from_attributes=True)
+    else:
+        class Config:
+            orm_mode = True
