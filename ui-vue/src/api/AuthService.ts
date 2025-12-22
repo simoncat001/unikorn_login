@@ -70,7 +70,7 @@ function setUser(user: AuthUser | undefined) {
     } catch { }
 }
 
-function getUser(): AuthUser | null {
+export function getUser(): AuthUser | null {
     try {
         const raw = sessionStorage.getItem(USER_KEY);
         if (!raw) return null;

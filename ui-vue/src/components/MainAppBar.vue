@@ -1,11 +1,6 @@
 <template>
   <header class="app-bar">
     <div class="toolbar">
-      <!-- Logo按钮 -->
-      <button class="logo-button" @click="goHome">
-        <span class="logo-text">MGSDB</span>
-      </button>
-
       <!-- 导航链接 -->
       <router-link to="/words/create" class="nav-button">词汇</router-link>
       <router-link to="/templates/recommend" class="nav-button">模板推荐</router-link>
@@ -150,8 +145,8 @@ const handleLogout = () => {
   padding: 8px 16px;
   color: white;
   text-decoration: none;
-  font-size: 14px;
-  font-weight: 400;
+  font-size: 18px;
+  font-weight: 600;
   text-align: center;
   transition: background-color 0.2s;
   font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;

@@ -1,4 +1,7 @@
-<template>
+
+import os
+
+content = r"""<template>
   <div class="admin-layout">
     <MainAppBar />
     <div class="main-content">
@@ -474,3 +477,7 @@ const getStatusText = (status: string) => {
   color: #999;
 }
 </style>
+"""
+
+with open('ui-vue/src/views/admin/AdminCollectionView.vue', 'w', encoding='utf-8') as f:
+    f.write(content)

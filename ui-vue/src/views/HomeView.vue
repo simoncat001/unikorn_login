@@ -14,8 +14,7 @@
         />
         <!-- 右边文字 -->
         <div>
-          <h1 class="main-title">材料基因组标准数据库</h1>
-          <h2 class="sub-title">Materials Genome Standard Database</h2>
+          <h1 class="main-title">材料科学标准管理数据库</h1>
         </div>
       </div>
     </div>
