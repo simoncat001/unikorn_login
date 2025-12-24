@@ -19,7 +19,6 @@ const items = [
   { label: "创建模板", to: PATHS.TEMPLATES_CREATE_PATH },
   { label: "模板推荐", to: PATHS.TEMPLATES_RECOMMEND_PATH },
   { label: "开发数据上传", to: PATHS.DEVELOPMENT_DATA_CREATE_PATH },
-  { label: "应用数据上传", to: PATHS.APPLICATION_DATA_CREATE_PATH },
   { label: "创建词条", to: PATHS.WORDS_CREATE_PATH },
   { label: "MGID 申请", to: PATHS.MGID_APPLY_CREATE_PATH },
   { label: "管理台", to: `${PATHS.ADMIN_PATH}/words` },

@@ -67,8 +67,10 @@ import SideBar from '../components/SideBar.vue';
 import * as paths from '../router/paths';
 import WordService from '../api/WordService';
 import TemplateService from '../api/TemplateService';
+import TemplateDraftService from '../api/TemplateDraftService';
 import DevelopmentDataService from '../api/DevelopmentDataService';
 import MGIDApplyService from '../api/MGIDApplyService';
+import StandardService from '../api/StandardService';
 
 const route = useRoute();
 const router = useRouter();
@@ -84,8 +86,10 @@ const pageTitle = computed(() => {
   switch (itemType.value) {
     case 'words': return '词汇列表';
     case 'templates': return '模板列表';
+    case 'template_drafts': return '模板草稿';
     case 'development_data': return '研发数据列表';
     case 'MGID_apply': return 'MGID申请记录';
+    case 'standards': return '标准列表';
     default: return '列表';
   }
 });
@@ -108,6 +112,12 @@ const columns = computed(() => {
         { key: 'create_timestamp', label: '创建时间', width: '150px' },
         { key: 'review_status', label: '状态', width: '100px' },
       ];
+    case 'template_drafts':
+      return [
+        { key: 'title', label: '标题', width: '260px' },
+        { key: 'updated_at', label: '更新时间', width: '180px' },
+        { key: 'review_status', label: '状态', width: '100px' },
+      ];
      case 'development_data':
       return [
         { key: 'title', label: '标题', width: '200px' },
@@ -121,6 +131,12 @@ const columns = computed(() => {
         { key: 'author_name', label: '申请人', width: '100px' },
         { key: 'create_timestamp', label: '申请时间', width: '150px' },
         { key: 'MGID', label: 'MGID', width: '150px' },
+      ];
+    case 'standards':
+      return [
+        { key: 'name_zh', label: '中文名称', width: '200px' },
+        { key: 'name_en', label: '英文名称', width: '200px' },
+        { key: 'review_status', label: '状态', width: '100px' },
       ];
     default:
       return [];
@@ -161,6 +177,19 @@ const fetchData = async () => {
             review_status: item.json_schema.review_status
         }));
         break;
+      case 'template_drafts':
+        response = await TemplateDraftService.listDrafts(start, pageSize);
+        const countResp = await TemplateDraftService.countDrafts();
+        count = countResp.count ?? 0;
+
+        // Backend returns rows that include: id, owner, title, status, created_at, updated_at, json_data
+        tableData.value = (response.data || []).map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          updated_at: item.updated_at || item.created_at || '-',
+          review_status: item.status || 'draft'
+        }));
+        break;
       case 'development_data':
         response = await DevelopmentDataService.getDataList("", start, pageSize);
         count = await DevelopmentDataService.getDataCount("");
@@ -181,6 +210,16 @@ const fetchData = async () => {
             author_name: item.json_data.author_name,
             create_timestamp: item.json_data.create_timestamp,
             MGID: item.json_data.MGID
+        }));
+        break;
+      case 'standards':
+        response = await StandardService.getMyStandards(start, pageSize);
+        count = await StandardService.getMyStandardsCount();
+        tableData.value = response.map((item: any) => ({
+            id: item.id,
+            name_zh: item.name_zh,
+            name_en: item.name_en,
+            review_status: item.review_status
         }));
         break;
     }
@@ -207,8 +246,10 @@ const handleCreate = () => {
   switch (itemType.value) {
     case 'words': router.push(paths.WORDS_CREATE_PATH); break;
     case 'templates': router.push(paths.TEMPLATES_CREATE_PATH); break;
+    case 'template_drafts': router.push(paths.TEMPLATES_CREATE_PATH); break;
     case 'development_data': router.push(paths.DEVELOPMENT_DATA_CREATE_PATH); break;
     case 'MGID_apply': router.push(paths.MGID_APPLY_CREATE_PATH); break;
+    case 'standards': router.push(paths.STANDARD_UPLOAD_PATH); break;
   }
 };
 
@@ -220,11 +261,18 @@ const handleDetail = (row: any) => {
     case 'templates':
       router.push(`${paths.TEMPLATES_DETAIL_PATH}/${row.id}`);
       break;
+    case 'template_drafts':
+      // No separate detail page yet; reuse edit flow.
+      router.push({ path: paths.TEMPLATES_CREATE_PATH, query: { draftId: row.id } });
+      break;
     case 'development_data':
       router.push(`${paths.DEVELOPMENT_DATA_DETAIL_PATH}/${row.id}`);
       break;
     case 'MGID_apply':
       router.push(`${paths.MGID_DETAIL_PATH}/${row.MGID}`);
+      break;
+    case 'standards':
+      router.push(`${paths.STANDARD_DETAIL_PATH}/${row.id}`);
       break;
   }
 };
@@ -237,11 +285,17 @@ const handleEdit = (row: any) => {
     case 'templates':
       router.push(`${paths.TEMPLATES_EDIT_PATH}/${row.id}`);
       break;
+    case 'template_drafts':
+      router.push({ path: paths.TEMPLATES_CREATE_PATH, query: { draftId: row.id } });
+      break;
     case 'development_data':
       router.push(`${paths.DEVELOPMENT_DATA_EDIT_PATH}/${row.id}`);
       break;
     case 'MGID_apply':
       // No edit for MGID apply usually
+      break;
+    case 'standards':
+      // No edit for standards yet
       break;
   }
 };
@@ -258,12 +312,20 @@ const handleDelete = async (row: any) => {
         case 'templates':
             status = await TemplateService.deleteTemplate(row.id);
             break;
+    case 'template_drafts':
+      // ApiProvider returns {status: 0} style for backend APIs. Keep same numeric check.
+      const resp = await TemplateDraftService.deleteDraft(row.id);
+      status = resp.status;
+      break;
         case 'development_data':
             status = await DevelopmentDataService.deleteData(row.id);
             break;
         case 'MGID_apply':
             alert("MGID申请记录无法删除");
             return;
+        case 'standards':
+            status = await StandardService.deleteStandard(row.id);
+            break;
       }
       
       if (status === 0) {

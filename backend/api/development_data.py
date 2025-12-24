@@ -470,13 +470,29 @@ def download_file(filename: str):
         logger.info(f"下载请求: object_key={object_key}, display_filename={display_filename}, bucket={MINIO_BUCKET}")
         
         # 从 MinIO 获取对象
-        response = client.get_object(MINIO_BUCKET, object_key)
+        # 使用 generator 确保流式传输正确关闭
+        def iterfile():
+            try:
+                with client.get_object(MINIO_BUCKET, object_key) as response:
+                    for d in response.stream(32*1024):
+                        yield d
+            except Exception as e:
+                logger.error(f"Stream error: {e}")
+
+        # 默认配置
+        media_type = "application/octet-stream"
+        disposition = "attachment"
+        
+        # 针对 PDF 文件进行特殊处理，允许浏览器内联预览
+        if display_filename.lower().endswith('.pdf'):
+            media_type = "application/pdf"
+            disposition = "inline"
         
         return StreamingResponse(
-            response, 
-            media_type="application/octet-stream", 
+            iterfile(), 
+            media_type=media_type, 
             headers={
-                "Content-Disposition": f"attachment; filename={urllib.parse.quote(display_filename)}"
+                "Content-Disposition": f"{disposition}; filename={urllib.parse.quote(display_filename)}"
             }
         )
     except S3Error as e:

@@ -51,11 +51,23 @@
                     <span v-if="col.key === 'review_status'" :class="getStatusClass(row[col.key])">
                       {{ getStatusText(row[col.key]) }}
                     </span>
+                    <a v-else-if="col.key === 'data_url'" :href="getClickableLink(row[col.key])" target="_blank" class="link-text">
+                      链接地址
+                    </a>
+                    <router-link 
+                      v-else-if="col.key === 'template_name'" 
+                      :to="`${paths.ADMIN_TEMPLATES_DETAIL_PATH}/${row.template_id}`"
+                      class="link-text"
+                    >
+                      {{ row[col.key] }}
+                    </router-link>
                     <span v-else>{{ row[col.key] }}</span>
                   </td>
                   <td>
                     <div class="action-buttons">
-                      <button class="btn-text" @click="handleDetail(row)">审核</button>
+                      <button class="btn-text" @click="handleDetail(row)">
+                        {{ currentItemType === 'standards' ? '详情' : '审核' }}
+                      </button>
                       <button class="btn-text delete" @click="handleDelete(row)">删除</button>
                     </div>
                   </td>
@@ -89,6 +101,9 @@ import WordService from '../../api/WordService';
 import TemplateService from '../../api/TemplateService';
 import DevelopmentDataService from '../../api/DevelopmentDataService';
 import MGIDApplyService from '../../api/MGIDApplyService';
+import StandardService from '../../api/StandardService';
+
+import { resolveApiUrl } from '../../api/config';
 
 const route = useRoute();
 const router = useRouter();
@@ -96,7 +111,8 @@ const router = useRouter();
 const menuItems = [
   { key: 'words', label: '词条管理' },
   { key: 'templates', label: '模板管理' },
-  { key: 'data', label: '数据管理' },
+  { key: 'data', label: '研发数据管理' },
+  { key: 'standards', label: '数据标准' },
   { key: 'MGID', label: 'MGID申请' },
 ];
 
@@ -144,8 +160,15 @@ const columns = computed(() => {
     case 'data':
       return [
         { key: 'title', label: '标题', width: '200px' },
-        { key: 'template_id', label: '模板ID', width: '150px' },
+        { key: 'template_name', label: '模板名称', width: '150px' },
         { key: 'create_timestamp', label: '创建时间', width: '150px' },
+        { key: 'review_status', label: '状态', width: '100px' },
+      ];
+    case 'standards':
+      return [
+        { key: 'name_zh', label: '中文名称', width: '200px' },
+        { key: 'name_en', label: '英文名称', width: '200px' },
+        { key: 'owner', label: '提交人', width: '100px' },
         { key: 'review_status', label: '状态', width: '100px' },
       ];
     case 'MGID':
@@ -153,12 +176,20 @@ const columns = computed(() => {
         { key: 'data_title', label: '数据标题', width: '200px' },
         { key: 'author_name', label: '申请人', width: '100px' },
         { key: 'MGID', label: 'MGID', width: '150px' },
+        { key: 'data_url', label: '链接地址', width: '150px' },
         { key: 'create_timestamp', label: '申请时间', width: '150px' },
       ];
     default:
       return [];
   }
 });
+
+const getClickableLink = (link: string) => {
+  if (!link) return '';
+  return link.startsWith("http://") || link.startsWith("https://")
+    ? link
+    : `//${link}`;
+};
 
 const fetchData = async () => {
   loading.value = true;
@@ -201,8 +232,24 @@ const fetchData = async () => {
             id: item.id,
             title: item.json_data.title,
             template_id: item.template_id,
+            template_name: item.json_data.template_name,
             create_timestamp: item.json_data.create_timestamp,
             review_status: item.json_data.review_status
+        }));
+        break;
+      case 'standards':
+        response = await StandardService.getStandards(start, pageSize);
+        // Backend currently returns list directly, but service wraps it in { data: ... }
+        // If backend returns list, response.data is the list.
+        // My service mock returned { data: data, total: 100 }
+        count = 100; // Mock count for now
+        tableData.value = response.data.map((item: any) => ({
+            id: item.id,
+            name_zh: item.name_zh,
+            name_en: item.name_en,
+            file_url: item.file_url,
+            owner: item.owner,
+            review_status: item.review_status || 'pending'
         }));
         break;
       case 'MGID':
@@ -213,7 +260,8 @@ const fetchData = async () => {
             data_title: item.json_data.data_title,
             author_name: item.json_data.author_name,
             create_timestamp: item.json_data.create_timestamp,
-            MGID: item.json_data.MGID
+            MGID: item.json_data.MGID,
+            data_url: item.json_data.data_url
         }));
         break;
     }
@@ -251,6 +299,9 @@ const handleDetail = (row: any) => {
     case 'data':
       router.push(`${paths.ADMIN_DATA_DETAIL_PATH}/${row.id}`);
       break;
+    case 'standards':
+      router.push(`${paths.STANDARD_DETAIL_PATH}/${row.id}`);
+      break;
     case 'MGID':
       router.push(`${paths.ADMIN_MGID_DETAIL_PATH}/${row.MGID}/default`);
       break;
@@ -271,6 +322,10 @@ const handleDelete = async (row: any) => {
             break;
         case 'data':
             status = (await DevelopmentDataService.deleteData(row.id)).status;
+            break;
+        case 'standards':
+            const res = await StandardService.deleteStandard(row.id);
+            status = res.status;
             break;
         case 'MGID':
             alert('MGID暂不支持删除');
@@ -466,6 +521,14 @@ const getStatusText = (status: string) => {
   background: #f5f5f5;
   color: #ccc;
   cursor: not-allowed;
+}
+.link-text {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+.link-text:hover {
+  text-decoration: none;
 }
 
 .empty-state {

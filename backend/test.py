@@ -3,7 +3,7 @@ from urllib.parse import quote_plus
 
 # 数据库配置
 SQLALCHEMY_DATABASE_PASSWORD = "123456"
-SQLALCHEMY_DATABASE_URL = "postgresql+psycopg://unikorn:{}@127.0.0.1:5432/unikorn".format(
+SQLALCHEMY_DATABASE_URL = "postgresql+psycopg://unicorn:{}@127.0.0.1:5432/unicorn".format(
     quote_plus(SQLALCHEMY_DATABASE_PASSWORD)
 )
 

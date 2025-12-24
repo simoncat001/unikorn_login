@@ -30,8 +30,10 @@
                 <span>{{ dataItem.json_data.MGID }}</span>
               </div>
               <div class="info-item full-width">
-                <label>数据内容预览</label>
-                <pre class="json-preview">{{ JSON.stringify(dataItem.json_data.data_content, null, 2) }}</pre>
+                <label>数据内容</label>
+                <div class="data-content-wrapper">
+                  <DevelopmentDataContent :data="dataItem.json_data" />
+                </div>
               </div>
             </div>
           </div>
@@ -70,6 +72,7 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MainAppBar from '../../components/MainAppBar.vue';
 import DevelopmentDataService, { DevelopmentData } from '../../api/DevelopmentDataService';
+import DevelopmentDataContent from '../../components/development-data/DevelopmentDataContent.vue';
 import AdminService from '../../api/AdminService';
 import { getUser } from '../../api/AuthService';
 

@@ -48,8 +48,8 @@ pip install -r requirements.txt
 
 ```bash
 sudo -u postgres psql
-CREATE USER unikorn WITH PASSWORD '123456';
-CREATE DATABASE unikorn OWNER unikorn;
+CREATE USER unicorn WITH PASSWORD '123456';
+CREATE DATABASE unicorn OWNER unicorn;
 \q
 ```
 

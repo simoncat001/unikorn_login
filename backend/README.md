@@ -1,10 +1,10 @@
 # Init
 
-1. check whether /etc/unikorn/unikorn-backend.ini exists
+1. check whether /etc/unicorn/unicorn-backend.ini exists
 2. if the .ini file does not exit, create it and its content is:
 
 ```
-[unikorn]
+[unicorn]
 database_pw=mypass
 ```
 
@@ -22,11 +22,11 @@ uvicorn main:app --reload
 Prefer using separated environment variables instead of a single DATABASE_URL:
 
 ```
-DB_USER=unikorn
+DB_USER=unicorn
 DB_PASSWORD=123456
 DB_HOST=127.0.0.1
 DB_PORT=5432
-DB_NAME=unikorn
+DB_NAME=unicorn
 ```
 
 Optional debug & eager test:

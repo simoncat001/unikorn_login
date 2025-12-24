@@ -231,3 +231,41 @@ def require_roles(roles: List[str]) -> Callable:
 def create_token_for_user(username: str) -> str:
     """便于内部调用的包装。"""
     return create_access_token({"sub": username}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+
+
+# --- Project-scoped authorization helpers ---
+
+def get_project_role(db_session: Session, project_id: str, user_id: str) -> Optional[str]:
+    """Return the role of a user within a project, or None if not a member."""
+    m = (
+        db_session.query(models.ProjectMember)
+        .filter(models.ProjectMember.project_id == project_id)
+        .filter(models.ProjectMember.user_id == user_id)
+        .first()
+    )
+    return getattr(m, "role", None) if m else None
+
+
+def require_project_role(project_id: str, allowed_roles: List[str]) -> Callable:
+    """FastAPI dependency: require project membership with one of allowed roles.
+
+    Example:
+        Depends(require_project_role(project_id, ["admin"]))
+    """
+    role_set = {r.strip().lower() for r in allowed_roles}
+
+    def _dep(
+        db_session: Session = Depends(db.get_db),
+        current_user: models.User = Depends(get_current_active_user),
+    ):
+        user_id = getattr(current_user, "user_name", None)
+        if not isinstance(user_id, str) or not user_id:
+            raise HTTPException(status_code=401, detail="Could not validate credentials")
+        role = get_project_role(db_session=db_session, project_id=project_id, user_id=user_id)
+        if not role:
+            raise HTTPException(status_code=403, detail="Not a project member")
+        if role_set and role.strip().lower() not in role_set:
+            raise HTTPException(status_code=403, detail="Insufficient project role")
+        return current_user
+
+    return _dep

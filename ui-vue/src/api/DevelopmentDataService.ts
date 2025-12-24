@@ -2,6 +2,39 @@ import ApiProvider from "./ApiProvider";
 import { getAccessToken } from "./AuthService";
 import { resolveApiUrl } from "./config";
 
+export type ElementType = {
+    title?: string;
+    type?: string;
+    unit?: string;
+    order?: ElementType[];
+    element_type?: ElementType;
+};
+
+export type NumberRange = {
+    start: string;
+    end: string;
+};
+
+export type UserFile = {
+    name: string;
+    sha256: string;
+};
+
+export type DataContent = {
+    type: string;
+    title: string;
+    content:
+    | string
+    | number
+    | DataContent[]
+    | (string | number)[]
+    | NumberRange
+    | UserFile
+    | null;
+    element_type?: ElementType;
+    unit?: string;
+};
+
 export interface DevelopmentDataCreateInfo {
     status: number;
     data?: any;

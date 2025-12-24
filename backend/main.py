@@ -8,13 +8,17 @@ import logging, re
 from api import (
     word,
     template,
+    template_draft,
     search,
     development_data,
+    dev_data,
+    project,
     country,
     organization,
     admin,
     MGID_apply,
     user,
+    standard,
 )
 import uvicorn
 
@@ -110,13 +114,17 @@ app.add_middleware(
 )
 app.include_router(word.router)
 app.include_router(template.router)
+app.include_router(template_draft.router)
 app.include_router(search.router)
 app.include_router(development_data.router)
+app.include_router(dev_data.router)
+app.include_router(project.router)
 app.include_router(country.router)
 app.include_router(organization.router)
 app.include_router(admin.router)
 app.include_router(MGID_apply.router)
 app.include_router(user.router)
+app.include_router(standard.router)
 
 
 @app.get("/")
@@ -141,4 +149,4 @@ def health_db():
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, log_level="info")
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, log_level="info", reload=True)

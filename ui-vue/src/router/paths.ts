@@ -1,8 +1,8 @@
 export const HOME_PATH = "/";
 export const WORDS_CREATE_PATH = "/words/create";
 export const TEMPLATES_CREATE_PATH = "/templates/create";
+export const TEMPLATES_FRAGMENT_CREATE_PATH = "/templates/fragment/create";
 export const DEVELOPMENT_DATA_CREATE_PATH = "/development_data/create";
-export const APPLICATION_DATA_CREATE_PATH = "/application_data/create";
 export const MGID_APPLY_CREATE_PATH = "/MGID_apply/create";
 export const NOT_FOUND_PATH = "/404";
 export const ADMIN_PATH = "/admin";
@@ -26,7 +26,7 @@ export const WORDS_EDIT_PATH = `${WORDS_PATH}/edit`;
 export const TEMPLATES_PATH = "/center/templates";
 export const TEMPLATES_DETAIL_PATH = `${TEMPLATES_PATH}/detail`;
 export const TEMPLATES_EDIT_PATH = `${TEMPLATES_PATH}/edit`;
-export const APPLICATION_DATA_PATH = "/center/application_data";
+export const TEMPLATE_DRAFTS_PATH = "/center/template_drafts";
 export const DEVELOPMENT_DATA_PATH = "/center/development_data";
 export const MGID_APPLY_PATH = "/center/MGID_apply";
 export const MGID_DETAIL_PATH = `${MGID_APPLY_PATH}/detail`;
@@ -35,6 +35,10 @@ export const DEVELOPMENT_DATA_DETAIL_PUBLIC_PATH = "/development_data/public/det
 export const DEVELOPMENT_DATA_EDIT_PATH = `${DEVELOPMENT_DATA_PATH}/edit`;
 export const MGID_PATH = "/MGID";
 export const TEMPLATES_RECOMMEND_PATH = "/templates/recommend";
+export const STANDARD_RECOMMEND_PATH = "/standards/recommend";
+export const STANDARD_UPLOAD_PATH = "/standards/upload";
+export const STANDARD_DETAIL_PATH = "/standards/detail";
+export const STANDARDS_PATH = "/center/standards";
 export const DEVELOPMENT_DATA_MULYIPART_UPLOAD_PATH = "/development_data/multipart_upload";
 export const LOGIN_PATH = "/login";
 
@@ -42,8 +46,8 @@ export const PATHS = {
   HOME_PATH,
   WORDS_CREATE_PATH,
   TEMPLATES_CREATE_PATH,
+  TEMPLATES_FRAGMENT_CREATE_PATH,
   DEVELOPMENT_DATA_CREATE_PATH,
-  APPLICATION_DATA_CREATE_PATH,
   MGID_APPLY_CREATE_PATH,
   NOT_FOUND_PATH,
   ADMIN_PATH,
@@ -67,7 +71,7 @@ export const PATHS = {
   TEMPLATES_PATH,
   TEMPLATES_DETAIL_PATH,
   TEMPLATES_EDIT_PATH,
-  APPLICATION_DATA_PATH,
+  TEMPLATE_DRAFTS_PATH,
   DEVELOPMENT_DATA_PATH,
   MGID_APPLY_PATH,
   MGID_DETAIL_PATH,
@@ -76,6 +80,9 @@ export const PATHS = {
   DEVELOPMENT_DATA_EDIT_PATH,
   MGID_PATH,
   TEMPLATES_RECOMMEND_PATH,
+  STANDARD_RECOMMEND_PATH,
+  STANDARD_UPLOAD_PATH,
+  STANDARD_DETAIL_PATH,
   DEVELOPMENT_DATA_MULYIPART_UPLOAD_PATH,
   LOGIN_PATH
 };

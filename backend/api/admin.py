@@ -264,7 +264,7 @@ def get_country_count(
 def delete_country(
     country_id: str, current_user=Depends(auth.require_roles(["admin", "super_admin"])), db: Session = Depends(db.get_db)
 ):
-    country_crud.delete_country(db=db, id=uuid.UUID(country_id))
+    country_crud.delete_country(db=db, id=country_id)
     return {"status": status.API_OK}
 
 
@@ -300,7 +300,7 @@ def delete_organization(
     current_user=Depends(auth.require_roles(["admin", "super_admin"])),
     db: Session = Depends(db.get_db),
 ):
-    organization_crud.delete_organization(db=db, id=uuid.UUID(organization_id))
+    organization_crud.delete_organization(db=db, id=organization_id)
     return {"status": status.API_OK}
 
 

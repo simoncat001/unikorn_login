@@ -214,7 +214,22 @@ def add_user(data: schemas.UserAdd, db: Session = Depends(db.get_db)):
 
 @router.get("/api/users/me", response_model=schemas.User)
 async def read_users_me(current_user: models.User = Depends(auth.get_current_active_user)):
-    return current_user
+    """Return the current user with a stable response shape.
+
+    Important: our SQLAlchemy `models.User` does not always include every field
+    required by `schemas.User` (e.g. legacy DB may miss `display_name`).
+    Returning the ORM object directly can therefore trigger FastAPI
+    ResponseValidationError. We normalize here.
+    """
+
+    return {
+        "user_name": getattr(current_user, "user_name", None),
+        "display_name": getattr(current_user, "display_name", None)
+        or getattr(current_user, "user_name", None),
+        "country": getattr(current_user, "country", None) or "",
+        "organization": getattr(current_user, "organization", None) or "",
+        "user_type": getattr(current_user, "user_type", None) or "",
+    }
 
 
 # 兼容旧前端：提供 /api/userinfo/ 路由，返回当前用户基础信息

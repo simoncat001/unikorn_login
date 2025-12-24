@@ -4,10 +4,21 @@ import { resolveApiUrl } from "./config";
 
 export type AuthUser = {
     username?: string;
+    user_name?: string;
     display_name?: string;
     user_type?: string | null;
     [key: string]: unknown;
 };
+
+function normalizeUserShape(input: any): AuthUser | null {
+    if (!input || typeof input !== "object") return null;
+    const u = input as Record<string, unknown>;
+    // Backend may return either {username,...} (legacy) or {user_name,...} (new).
+    if (typeof u.user_name !== "string" && typeof u.username === "string") {
+        u.user_name = u.username;
+    }
+    return u as AuthUser;
+}
 
 type LoginResponse = {
     access_token: string;
@@ -86,16 +97,27 @@ async function fetchCurrentUser(): Promise<AuthUser | null> {
         if (accessToken) {
             headers["Authorization"] = `Bearer ${accessToken}`;
         }
-        const response = await fetch(resolveApiUrl("/api/userinfo/"), {
+        // Prefer /api/users/me (includes organization); fallback token/cookie compatible.
+        const response = await fetch(resolveApiUrl("/api/users/me"), {
             method: "GET",
             credentials: "include",
             headers,
         });
         if (!response.ok) {
-            return null;
+            // Backward compatibility for older deployments.
+            const legacy = await fetch(resolveApiUrl("/api/userinfo/"), {
+                method: "GET",
+                credentials: "include",
+                headers,
+            });
+            if (!legacy.ok) return null;
+            const legacyData = await legacy.json();
+            const legacyUser = normalizeUserShape(legacyData);
+            if (legacyUser) setUser(legacyUser);
+            return legacyUser;
         }
         const data = await response.json();
-        const normalized = data && typeof data === "object" ? (data as AuthUser) : null;
+        const normalized = normalizeUserShape(data);
         if (normalized) {
             setUser(normalized);
         }

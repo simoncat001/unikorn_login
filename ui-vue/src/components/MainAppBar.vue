@@ -2,11 +2,14 @@
   <header class="app-bar">
     <div class="toolbar">
       <!-- 导航链接 -->
+      <router-link to="/" class="nav-button">主页</router-link>
+      <router-link to="/standards/recommend" class="nav-button">标准推荐</router-link>
+      <router-link to="/standards/upload" class="nav-button">标准上传</router-link>
       <router-link to="/words/create" class="nav-button">词汇</router-link>
       <router-link to="/templates/recommend" class="nav-button">模板推荐</router-link>
+      <router-link to="/templates/fragment/create" class="nav-button">模板片段</router-link>
       <router-link to="/templates/create" class="nav-button">模板创建</router-link>
       <router-link to="/development_data/create" class="nav-button">研发数据</router-link>
-      <router-link to="/application_data/create" class="nav-button">应用数据</router-link>
       <router-link to="/MGID_apply/create" class="nav-button">MGID申请</router-link>
 
       <!-- 占位空间 -->
@@ -54,13 +57,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 
+import AuthService, { getUser } from '../api/AuthService';
+
 const router = useRouter();
-const username = ref('kevin');
+const username = ref('');
 const showUserMenu = ref(false);
 const menuButtonRef = ref<HTMLElement | null>(null);
+
+const syncUsername = () => {
+  const user = getUser();
+  // Prefer display_name when provided, fall back to username.
+  const name = (user?.display_name || user?.username || '').toString();
+  username.value = name || '未登录';
+};
+
+onMounted(() => {
+  syncUsername();
+  // Keep in sync if another tab logs in/out.
+  window.addEventListener('storage', syncUsername);
+});
 
 const menuPosition = computed(() => {
   if (!menuButtonRef.value) return {};
@@ -100,17 +118,23 @@ const goToAdminCenter = () => {
 
 const handleLogout = () => {
   closeUserMenu();
-  console.log('退出登录');
-  router.push('/login');
+  AuthService.logout().finally(() => {
+    syncUsername();
+    router.push('/login');
+  });
 };
 </script>
 
 <style scoped>
 .app-bar {
   width: 100%;
+  min-width: 1200px;
   background-color: #063E8B;
   color: white;
   box-shadow: 0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .toolbar {
@@ -150,6 +174,7 @@ const handleLogout = () => {
   text-align: center;
   transition: background-color 0.2s;
   font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  white-space: nowrap;
 }
 
 .nav-button:hover {
@@ -177,7 +202,8 @@ const handleLogout = () => {
   color: white;
   cursor: pointer;
   padding: 8px 16px;
-  font-size: 14px;
+  font-size: 18px;
+  font-weight: 600;
   height: 42px;
 }
 
@@ -203,7 +229,8 @@ const handleLogout = () => {
   color: white;
   cursor: pointer;
   padding: 8px 16px;
-  font-size: 14px;
+  font-size: 18px;
+  font-weight: 600;
   height: 42px;
   font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }

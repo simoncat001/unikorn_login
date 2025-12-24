@@ -25,10 +25,21 @@
                 <label>描述</label>
                 <p>{{ template.json_schema.title }}</p>
               </div>
+              <div class="info-item full-width">
+                <label>模板字段</label>
+                <div class="template-fields-wrapper">
+                  <OrderedSchemaList
+                    v-if="template.json_schema.word_order && template.json_schema.schema"
+                    :word-order="template.json_schema.word_order"
+                    :schema="template.json_schema.schema"
+                    :depth="0"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="review-section">
+          <div class="review-section" v-if="template.json_schema.review_status !== 'passed'">
             <h3>审核操作</h3>
             <div class="review-form">
               <div class="form-group">
@@ -65,6 +76,7 @@ import TemplateService, { Template } from '../../api/TemplateService';
 import AdminService from '../../api/AdminService';
 import { getUser } from '../../api/AuthService';
 import { getFileDownloadUrl } from '../../api/config';
+import OrderedSchemaList from '../../components/template/OrderedSchemaList.vue';
 
 const route = useRoute();
 const router = useRouter();

@@ -17,8 +17,8 @@ class Settings(BaseSettings):
     def get_database_url(self) -> str:
         if self.DATABASE_URL:
             return self.DATABASE_URL
-    # 兼容旧 /etc/unikorn/unikorn-backend.ini
-        ini_path = "/etc/unikorn/unikorn-backend.ini"
+    # 兼容旧 /etc/unicorn/unicorn-backend.ini
+        ini_path = "/etc/unicorn/unicorn-backend.ini"
         if os.path.exists(ini_path):
             cfg = ConfigParser()
             cfg.read(ini_path, encoding="utf-8")

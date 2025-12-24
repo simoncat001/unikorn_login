@@ -1,0 +1,4 @@
+# Dev / test dependencies (keep prod image small)
+# Pinned to known-working versions to reduce CI/local drift.
+pytest==9.0.2
+httpx==0.27.0

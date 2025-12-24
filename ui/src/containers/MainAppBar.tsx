@@ -209,7 +209,7 @@ const MainAppBar: React.FC = () => {
     <Container className={classes.root}>
       <AppBar position="relative" className={classes.root}>
         <Toolbar style={{ padding: "0" }}>
-          <UnikornLogoButton />
+          <UnicornLogoButton />
           <AppButton value="词汇" width={70} href={WORDS_CREATE_PATH} />
           <AppButton value="模板推荐" width={100} href={TEMPLATES_RECOMMEND_PATH} />
           <AppButton value="模板创建" width={100} href={TEMPLATES_CREATE_PATH} />
@@ -352,7 +352,7 @@ const MainAppBar: React.FC = () => {
   );
 };
 
-const UnikornLogoButton: React.FC = () => {
+const UnicornLogoButton: React.FC = () => {
   const classes = useStyles();
   const fontClasses = Common.fontStyles();
   const routerHistory = useHistory();

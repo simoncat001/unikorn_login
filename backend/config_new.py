@@ -1,0 +1,10 @@
+import os
+
+SQLALCHEMY_DATABASE_PASSWORD = "123456"
+SQLALCHEMY_DATABASE_URL = "postgresql+psycopg://unicorn:{}@localhost:5432/unikorn".format(
+    SQLALCHEMY_DATABASE_PASSWORD
+)
+
+PLATFORM_NAME = "MGSDB"
+PLATFORM_WEBSITE = "MGSDB.sjtu.edu.cn"
+OBJECT_STORE_URL_LIST = ["http://127.0.0.1:7701"]

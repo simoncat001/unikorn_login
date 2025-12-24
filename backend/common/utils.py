@@ -49,7 +49,7 @@ def is_valid_json(json_str: str):
 def initialize_word_metadata(data: dict, serial_number: int, current_user: str):
     data["serial_number"] = serial_number
     data["author"] = current_user
-    data["create_timestamp"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    data["create_timestamp"] = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d %H:%M:%S")
     data["reviewer"] = None
     data["rejected_reason"] = None
     # 默认审核状态：未审核（系统内部值使用 waiting_review）
@@ -60,7 +60,7 @@ def initialize_word_metadata(data: dict, serial_number: int, current_user: str):
 
 def initialize_template_metadata(data: dict, db: Session, current_user: str):
     data["author"] = current_user
-    data["create_timestamp"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    data["create_timestamp"] = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d %H:%M:%S")
     data["reviewer"] = None
     data["rejected_reason"] = None
     data["citation_count"] = 0
@@ -76,7 +76,7 @@ def initialize_template_metadata(data: dict, db: Session, current_user: str):
 
 
 def get_MGID_create_time():
-    return datetime.datetime.now().strftime("%Y%m%d")
+    return datetime.datetime.now(datetime.UTC).strftime("%Y%m%d")
 
 
 def get_MGID_organization(db: Session, user: str):

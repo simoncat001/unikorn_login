@@ -335,7 +335,8 @@ def resolve_title_from_payload(
         if isinstance(raw_title, str) and raw_title.strip():
             return raw_title.strip()
 
-    timestamp = (now or datetime.datetime.now()).strftime("%Y-%m-%d %H:%M:%S")
+    # Use timezone-aware UTC timestamp to avoid naive datetime deprecation issues.
+    timestamp = (now or datetime.datetime.now(datetime.UTC)).strftime("%Y-%m-%d %H:%M:%S")
     return f"{template_name}-{timestamp}"
 
 
@@ -404,7 +405,7 @@ def get_development_data(
     word_oder = _merge_word_order_with_payload(word_oder, post_data)
     data_generate_method = template_json_schema["data_generate_method"]
     template_type = template_json_schema["template_type"]
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(datetime.UTC)
     try:
         get_development_data_rec(post_data, word_oder, data_content)
     except error.FileWriteFailError:

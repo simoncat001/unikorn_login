@@ -14,7 +14,7 @@
         />
         <!-- 右边文字 -->
         <div>
-          <h1 class="main-title">材料科学标准管理数据库</h1>
+          <h1 class="main-title">AI-ready材料数据标准模板示范与数据管理门户</h1>
         </div>
       </div>
     </div>
@@ -55,17 +55,26 @@
       </div>
     </div>
 
-    <!-- 数据资源标签 -->
-    <div class="section-label">
-      <h3>数据资源</h3>
-    </div>
+    <!-- 搜索结果 -->
+    <SearchResult
+      :resultMergedList="resultMergedList"
+      :isLoaded="isLoaded"
+      :isClicked="isClicked"
+      :isAuthed="isAuthed"
+      :query="searchQuery"
+    />
 
     <!-- 数据卡片 -->
     <div class="cards-container">
       <div class="card">
-        <h3>词条</h3>
-        <p>材料基因组相关词条和概念</p>
-        <RouterLink :to="paths.WORDS_CREATE_PATH" class="card-link">创建词条</RouterLink>
+        <h3>词汇</h3>
+        <p>材料基因组相关词汇和概念</p>
+        <RouterLink :to="paths.WORDS_CREATE_PATH" class="card-link">创建词汇</RouterLink>
+      </div>
+      <div class="card">
+        <h3>模板片段</h3>
+        <p>可复用的模板组成部分</p>
+        <RouterLink :to="paths.TEMPLATES_FRAGMENT_CREATE_PATH" class="card-link">创建片段</RouterLink>
       </div>
       <div class="card">
         <h3>模板</h3>
@@ -73,24 +82,16 @@
         <RouterLink :to="paths.TEMPLATES_CREATE_PATH" class="card-link">创建模板</RouterLink>
       </div>
       <div class="card">
+        <h3>数据标准</h3>
+        <p>查找和浏览数据标准</p>
+        <RouterLink :to="paths.STANDARD_RECOMMEND_PATH" class="card-link">标准推荐</RouterLink>
+      </div>
+      <div class="card">
         <h3>开发数据</h3>
         <p>实验和计算数据</p>
         <RouterLink :to="paths.DEVELOPMENT_DATA_CREATE_PATH" class="card-link">上传数据</RouterLink>
       </div>
-      <div class="card">
-        <h3>应用数据集</h3>
-        <p>应用级数据集合</p>
-        <RouterLink :to="paths.APPLICATION_DATA_CREATE_PATH" class="card-link">上传数据</RouterLink>
-      </div>
-    </div>
-
-    <!-- 服务资源标签 -->
-    <div class="section-label">
-      <h3>服务资源</h3>
-    </div>
-
-    <!-- 服务卡片 -->
-    <div class="cards-container">
+      <!-- 服务卡片 -->
       <div class="card">
         <h3>MGID申请</h3>
         <p>申请材料基因组唯一标识符</p>
@@ -127,6 +128,10 @@ import { ref, computed } from 'vue';
 import { RouterLink } from "vue-router";
 import MainAppBar from "../components/MainAppBar.vue";
 import * as paths from "../router/paths";
+import SearchService from "../api/SearchService";
+import { mergeSearchList, getQueryTypeList, SortListElem } from "../utils/searchUtils";
+import SearchResult from "../components/search/SearchResult.vue";
+import { isLoggedIn } from "../api/AuthService";
 
 const searchQuery = ref('');
 const searchFilters = ref({
@@ -136,11 +141,34 @@ const searchFilters = ref({
   MGID: false
 });
 
+const resultMergedList = ref<SortListElem[]>([]);
+const isLoaded = ref(false);
+const isClicked = ref(false);
+const isAuthed = ref(isLoggedIn());
+
 const currentYear = computed(() => new Date().getFullYear());
 
-const handleSearch = () => {
+const handleSearch = async () => {
   console.log('搜索:', searchQuery.value, searchFilters.value);
-  // TODO: 实现搜索功能
+  isClicked.value = true;
+  isLoaded.value = false;
+  
+  const queryType = getQueryTypeList(searchFilters.value);
+  
+  try {
+    const searchList = await SearchService.getQuery(
+      searchQuery.value,
+      queryType,
+      0,
+      queryType.length !== 0 ? Math.ceil(10 / queryType.length) : 0
+    );
+    
+    resultMergedList.value = mergeSearchList(searchList);
+    isLoaded.value = true;
+  } catch (error) {
+    console.error("Search failed:", error);
+    isLoaded.value = true; // Stop loading indicator even on error
+  }
 };
 </script>
 
@@ -161,15 +189,17 @@ const handleSearch = () => {
 
 .icon-content-container {
   display: flex;
+  flex-direction: column;
   align-items: center;
   max-width: 800px;
   margin: 80px 50px 40px 50px;
 }
 
 .logo-image {
-  width: 128px;
-  height: 128px;
-  margin-right: 10px;
+  width: auto;
+  height: 180px;
+  margin-bottom: 20px;
+  mix-blend-mode: multiply;
 }
 
 @media (max-width: 600px) {
@@ -180,10 +210,12 @@ const handleSearch = () => {
 }
 
 .main-title {
-  font-size: 46px;
-  font-weight: 530;
+  font-size: 28px;
+  font-weight: 700;
   margin: 0;
   text-align: center;
+  white-space: nowrap;
+  color: #042b61;
   font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
 }
 
@@ -260,6 +292,7 @@ const handleSearch = () => {
   width: 16px;
   height: 16px;
   cursor: pointer;
+  accent-color: #3b82f6;
 }
 
 .section-label {

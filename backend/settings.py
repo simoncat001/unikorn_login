@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     MINIO_USE_SSL: bool = os.getenv("MINIO_USE_SSL", "1") == "1"
 
     def _load_prod_ini(self):  # internal helper
-        ini_path = "/etc/unikorn/unikorn-backend.ini"
+        ini_path = "/etc/unicorn/unicorn-backend.ini"
         if not (self.APP_ENV == "prod" and os.path.exists(ini_path)):
             return
         try:
@@ -47,11 +47,11 @@ class Settings(BaseSettings):
             # override only if not already provided via env
             if not self.DATABASE_URL:
                 self.DATABASE_URL = self._compose_url(
-                    cfg.get("unikorn", "user", fallback="unikorn"),
-                    cfg.get("unikorn", "database_pw", fallback="123456"),
-                    cfg.get("unikorn", "db_host", fallback="127.0.0.1"),
-                    cfg.get("unikorn", "port", fallback="5432"),
-                    cfg.get("unikorn", "database", fallback="unikorn"),
+                    cfg.get("unicorn", "user", fallback="unicorn"),
+                    cfg.get("unicorn", "database_pw", fallback="123456"),
+                    cfg.get("unicorn", "db_host", fallback="127.0.0.1"),
+                    cfg.get("unicorn", "port", fallback="5432"),
+                    cfg.get("unicorn", "database", fallback="unicorn"),
                 )
             # MinIO
             self.MINIO_ENDPOINT = self.MINIO_ENDPOINT or cfg.get("minio", "endpoint", fallback=None)
@@ -100,7 +100,7 @@ class Settings(BaseSettings):
         if u and p:
             h = os.getenv("DB_HOST", "127.0.0.1")
             port = os.getenv("DB_PORT", "5432")
-            dbn = os.getenv("DB_NAME", "unikorn")
+            dbn = os.getenv("DB_NAME", "unicorn")
             return self._compose_url(u, p, h, port, dbn)
 
         # 3. ini 文件
@@ -110,17 +110,17 @@ class Settings(BaseSettings):
                 cfg = ConfigParser()
                 cfg.read(ini_path, encoding="utf-8")
                 return self._compose_url(
-                    cfg.get("postgresql", "user", fallback="unikorn"),
+                    cfg.get("postgresql", "user", fallback="unicorn"),
                     cfg.get("postgresql", "password", fallback="123456"),
                     cfg.get("postgresql", "host", fallback="127.0.0.1"),
                     cfg.get("postgresql", "port", fallback="5432"),
-                    cfg.get("postgresql", "database", fallback="unikorn"),
+                    cfg.get("postgresql", "database", fallback="unicorn"),
                 )
             except Exception:
                 pass
 
         # 4. 默认
-        return self._compose_url("unikorn", "123456", "127.0.0.1", "5432", "unikorn")
+        return self._compose_url("unicorn", "123456", "127.0.0.1", "5432", "unicorn")
 
     @staticmethod
     def _sanitize_full_url(raw: str) -> str:
@@ -159,7 +159,7 @@ def configure_logging():
     level = logging.INFO if settings.APP_ENV == "prod" else logging.DEBUG
     root = logging.getLogger()
     if not root.handlers:
-        log_dir = os.getenv("LOG_DIR", "/var/log/unikorn")
+        log_dir = os.getenv("LOG_DIR", "/var/log/unicorn")
         try:
             os.makedirs(log_dir, exist_ok=True)
             handler = RotatingFileHandler(os.path.join(log_dir, "backend.log"), maxBytes=5*1024*1024, backupCount=3, encoding="utf-8")

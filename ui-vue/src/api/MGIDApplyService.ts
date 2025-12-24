@@ -65,8 +65,32 @@ const getMGIDCount = async (): Promise<number> => {
     }
 };
 
+const getMGIDApplyCreateSchema = async (): Promise<any> => {
+    try {
+        const response = await ApiProvider.get("/api/get_MGID_apply_schema");
+        return await response.json();
+    } catch (e) {
+        console.error(e);
+        throw e;
+    }
+};
+
+const createMGIDApply = async (jsonData: string): Promise<any> => {
+    try {
+        const response = await ApiProvider.post("/api/MGID_apply/", {
+            json_data: jsonData
+        });
+        return await response.json();
+    } catch (e) {
+        console.error(e);
+        throw e;
+    }
+};
+
 export default {
     getMGIDList,
     getMGIDCount,
     getMGID,
+    getMGIDApplyCreateSchema,
+    createMGIDApply
 };

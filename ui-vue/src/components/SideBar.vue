@@ -18,11 +18,17 @@
         <router-link :to="paths.TEMPLATES_PATH" class="nav-item" active-class="active">
           <span class="nav-text">模板</span>
         </router-link>
+        <router-link to="/center/template_drafts" class="nav-item" active-class="active">
+          <span class="nav-text">模板草稿</span>
+        </router-link>
         <router-link :to="paths.DEVELOPMENT_DATA_PATH" class="nav-item" active-class="active">
           <span class="nav-text">研发数据</span>
         </router-link>
         <router-link :to="paths.MGID_APPLY_PATH" class="nav-item" active-class="active">
           <span class="nav-text">MGID申请记录</span>
+        </router-link>
+        <router-link :to="paths.STANDARDS_PATH" class="nav-item" active-class="active">
+          <span class="nav-text">数据标准</span>
         </router-link>
       </nav>
     </div>

@@ -150,6 +150,16 @@ const getEmptyTemplateWithId = async (id: string): Promise<TemplateFileSubmitRes
     }
 };
 
+const getPresetWordList = async (): Promise<{ [key: string]: string[] }> => {
+    try {
+        const response = await ApiProvider.get("/api/get_preset_word_list");
+        return await response.json();
+    } catch (e) {
+        console.error(e);
+        throw e;
+    }
+};
+
 export default {
     getTemplateListWithBegin,
     getTemplateSchemaWithId,
@@ -159,4 +169,5 @@ export default {
     getTemplatesCount,
     deleteTemplate,
     getTemplate,
+    getPresetWordList,
 };

@@ -5,6 +5,30 @@ except Exception:
     ConfigDict = None  # type: ignore
 import uuid
 from typing import List
+from typing import Optional, Any
+
+
+class TemplateDraftUpsert(BaseModel):
+    """Payload to create/update a template draft.
+
+    `payload` is the raw draft data from the frontend (basicInfo + templateData).
+    """
+
+    title: str
+    payload: dict
+
+
+class TemplateDraft(BaseModel):
+    id: uuid.UUID
+    owner: str
+    title: str
+    json_data: dict
+    status: str
+    if ConfigDict:
+        model_config = ConfigDict(from_attributes=True)
+    else:
+        class Config:
+            orm_mode = True
 
 
 class TemplateCreate(BaseModel):
@@ -111,6 +135,83 @@ class User(BaseModel):
     country: str
     organization: str
     user_type: str
+    if ConfigDict:
+        model_config = ConfigDict(from_attributes=True)
+    else:
+        class Config:
+            orm_mode = True
+
+
+class StandardCreate(BaseModel):
+    name_zh: str
+    name_en: str
+    file_url: str
+    review_status: str = "pending"
+    owner: str | None = None
+
+
+class StandardStatusUpdate(BaseModel):
+    review_status: str
+
+
+class Standard(StandardCreate):
+    id: uuid.UUID
+    owner: str | None = None
+    if ConfigDict:
+        model_config = ConfigDict(from_attributes=True)
+    else:
+        class Config:
+            orm_mode = True
+
+
+class ProjectCreate(BaseModel):
+    name: str
+
+
+class Project(BaseModel):
+    id: uuid.UUID
+    name: str
+    created_by: str
+    if ConfigDict:
+        model_config = ConfigDict(from_attributes=True)
+    else:
+        class Config:
+            orm_mode = True
+
+
+class ProjectMemberUpsert(BaseModel):
+    user_id: str
+    role: str  # 'admin' | 'user'
+
+
+class ProjectMember(BaseModel):
+    id: uuid.UUID
+    project_id: str
+    user_id: str
+    role: str
+    if ConfigDict:
+        model_config = ConfigDict(from_attributes=True)
+    else:
+        class Config:
+            orm_mode = True
+
+
+class DevDataCreate(BaseModel):
+    data: dict
+
+
+class DevDataUpdate(BaseModel):
+    data: dict
+
+
+class DevData(BaseModel):
+    id: uuid.UUID
+    project_id: str
+    data: dict
+    created_by: str
+    updated_by: str
+    created_at: Optional[Any] = None
+    updated_at: Optional[Any] = None
     if ConfigDict:
         model_config = ConfigDict(from_attributes=True)
     else:
